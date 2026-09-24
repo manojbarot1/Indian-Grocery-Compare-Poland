@@ -266,7 +266,14 @@ shops:
       include_pattern: "/pl/p/"
       selectors:
         title: ["h1", "title"]
-        price: [".price", ".product-price"]
+        # Gross price only. This page renders net and gross side by side and
+        # both live in `.price` elements, so a generic `.price` selector can
+        # return the net figure — 23% low. JSON-LD is the primary source here
+        # and states valueAddedTaxIncluded, but the fallback must not disagree.
+        price:
+          - ".product-price__final-price"
+          - ".js__price-value"
+          - ".product-price__base-price"
         image: ["img[src*='/userdata/public/gfx']"]
     shipping:
       # The only shop besides India Bazaar that publishes machine-readable
