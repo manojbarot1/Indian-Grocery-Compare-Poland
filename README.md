@@ -19,11 +19,15 @@ Aashirvaad Whole Wheat Atta 10 kg          Maggi 2-Minute Masala Noodles 70 g
   Little India         78.00 zł
 ```
 
+<sub>Real figures from the live index, captured 18 September 2026. Shop prices
+change — these illustrate the spread, they are not a current quote.</sub>
+
 ---
 
 ## Status
 
-Working MVP, running against live shop catalogues.
+Working MVP, running against live shop catalogues. Figures below are a
+snapshot from 18 September 2026.
 
 | | |
 |---|---|
@@ -60,6 +64,8 @@ thresholds are real and apply per order:
 |---|---|---|
 | Cheapest price per item | 2 | 46.93 zł |
 | **Optimal split** | **1** | **32.94 zł** |
+
+<sub>A real five-item basket, same snapshot.</sub>
 
 The optimiser is exact, not greedy — it enumerates shop subsets, which is
 instant for the handful of shops serving one market. A greedy answer that's

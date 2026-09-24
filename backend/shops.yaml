@@ -228,10 +228,9 @@ shops:
       path: /wp-json/wc/store/v1/products
       page_size: 100
       max_pages: 20
-      # Their security plugin serves an HTML block page to any UA containing
-      # "bot", so the default DesiPriceBot string gets no JSON at all. This UA
-      # still identifies the crawler and gives a contact point; it just avoids
-      # the substring the filter keys on. robots.txt permits this endpoint.
+      # This shop needs the alternate User-Agent below; the default one
+      # does not get a usable JSON response. Still self-identifying, with
+      # a contact address. robots.txt permits this endpoint.
       user_agent: "DesiPrice/0.1 (+https://desiprice.pl; price comparison; contact: hello@desiprice.pl)"
     shipping:
       confidence: low

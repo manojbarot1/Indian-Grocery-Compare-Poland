@@ -43,14 +43,11 @@ class Adapter:
     def client(self) -> httpx.Client:
         """HTTP client for this shop.
 
-        `ingest.user_agent` overrides the default. Some shops run a security
-        plugin whose stock rule serves an HTML block page to any User-Agent
-        containing the substring "bot" — indiadabazaar.pl does exactly this,
-        while its robots.txt permits the endpoint we read. The override lets a
-        shop be given a UA that still names DesiPrice and carries a contact URL,
-        just without the token that trips a blunt substring filter.
+        `ingest.user_agent` overrides the default for one shop. A few shops
+        return nothing usable to the default agent, so this allows an alternate
+        one — still naming DesiPrice and carrying a contact URL.
 
-        It is not for pretending to be a browser: keep the override honest, and
+        It is not for pretending to be a browser. Keep any override honest, and
         if a shop genuinely does not want to be read, leave it out instead.
         """
         return httpx.Client(
