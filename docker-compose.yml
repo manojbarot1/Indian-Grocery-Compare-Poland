@@ -38,6 +38,12 @@ services:
       - api
     environment:
       VITE_API_TARGET: http://api:8000
+      # Hosts Vite will answer to, beyond localhost — needed when a Cloudflare
+      # tunnel fronts the dev server. Comma-separated; a leading dot matches
+      # every subdomain.
+      VITE_ALLOWED_HOSTS: ${VITE_ALLOWED_HOSTS:-.07062006.xyz}
+      # Set to the tunnel hostname to make hot-reload work through it.
+      VITE_TUNNEL_HOST: ${VITE_TUNNEL_HOST:-}
     ports:
       - "5173:5173"
     volumes:
