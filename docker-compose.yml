@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: desicena
+      POSTGRES_PASSWORD: desicena
+      POSTGRES_DB: desicena
+    ports:
+      - "55432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U desicena"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://desicena:desicena@db:5432/desicena
+    ports:
+      - "8090:8000"
+    volumes:
+      # Mounted for live reload during development.
+      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Dev server for the React app. Runs in Docker so the host needs no Node.
+  # Vite proxies /api to the api service, so the browser sees one origin.
+  web:
+    image: node:20-alpine
+    working_dir: /app
+    depends_on:
+      - api
+    environment:
+      VITE_API_TARGET: http://api:8000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - web_node_modules:/app/node_modules
+    command: sh -c "npm install --no-audit --no-fund --loglevel=error && npm run dev"
+
+volumes:
+  pgdata:
+  web_node_modules:

@@ -1,0 +1,946 @@
+:root {
+  --bg: #fbf9f6;
+  --panel: #fff;
+  --ink: #1c1917;
+  --muted: #78716c;
+  --line: #e7e2dc;
+  --accent: #c2410c;
+  --accent-soft: #fff1e9;
+  --good: #15803d;
+  --warn: #b45309;
+  --warn-soft: #fef6e7;
+  --shadow: 0 1px 2px rgba(28, 25, 23, 0.06), 0 4px 12px rgba(28, 25, 23, 0.05);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17161a;
+    --panel: #211f24;
+    --ink: #f5f3f0;
+    --muted: #a8a29e;
+    --line: #35323a;
+    --accent: #fb923c;
+    --accent-soft: #3a2415;
+    --good: #4ade80;
+    --warn: #fbbf24;
+    --warn-soft: #3a2f15;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 14px rgba(0, 0, 0, 0.25);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+.wrap {
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.bar {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 0;
+  flex-wrap: wrap;
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+.logo span {
+  color: var(--accent);
+}
+.tag {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+input[type="search"],
+select,
+input[type="number"] {
+  font: inherit;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg);
+  color: var(--ink);
+}
+input[type="search"] {
+  flex: 1 1 260px;
+  min-width: 200px;
+}
+input[type="number"] {
+  width: 64px;
+  padding: 5px 7px;
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border-radius: 9px;
+  padding: 9px 14px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+}
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+button.wide {
+  width: 100%;
+  margin-top: 12px;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+button.link {
+  background: none;
+  border: none;
+  color: var(--muted);
+  padding: 2px 6px;
+  font-size: 14px;
+}
+
+label.check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+main {
+  padding: 22px 0 64px;
+}
+
+/* rail (categories + shops) | results | shopping list */
+.layout {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr) 320px;
+  gap: 20px;
+  align-items: start;
+  grid-template-areas: "rail results side";
+}
+.rail { grid-area: rail; }
+section { grid-area: results; }
+.side { grid-area: side; }
+
+/* The whole rail sticks as one unit. Two independently sticky blocks in
+   separate grid rows overlapped each other on scroll. It scrolls internally
+   when the two lists together are taller than the viewport. */
+.rail {
+  position: sticky;
+  top: calc(var(--header-h, 112px) + 14px);
+  max-height: calc(100vh - var(--header-h, 112px) - 28px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-right: 2px;
+}
+@media (max-width: 1150px) {
+  .layout {
+    grid-template-columns: 178px minmax(0, 1fr);
+    grid-template-areas:
+      "rail results"
+      "side side";
+  }
+  .side {
+    grid-column: 1 / -1;
+    position: static;
+  }
+}
+@media (max-width: 760px) {
+  .layout {
+    grid-template-columns: 1fr;
+    grid-template-areas: "rail" "results" "side";
+  }
+  /* Sticky is wrong on a phone — the rail would eat the screen. */
+  .rail {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+  .cats ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .cats li {
+    flex: 0 0 auto;
+  }
+}
+
+/* --- category / shop filter blocks --- */
+.cats {
+  padding: 11px;
+  flex: none;
+}
+.cats h2 {
+  margin: 0 0 8px 4px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.cats ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.cats button {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: none;
+  background: none;
+  border-radius: 7px;
+  font-size: 13px;
+  text-align: left;
+  color: var(--ink);
+  line-height: 1.25;
+}
+.cats button:hover {
+  background: var(--bg);
+}
+.cats button.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+.cats .n {
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+.cats button.active .n {
+  color: var(--accent);
+}
+
+/* --- shops panel (collapsible) --- */
+.shops-card {
+  overflow: hidden;
+}
+.shops-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: none;
+  background: none;
+  padding: 13px 15px;
+  font-size: 13px;
+}
+.shops-title {
+  font-weight: 600;
+}
+.shops-title .meta {
+  display: inline;
+  font-weight: 400;
+}
+.chev {
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+}
+.shops-body {
+  padding: 0 15px 13px;
+}
+.shops-table {
+  width: 100%;
+  font-size: 12.5px;
+}
+.shops-table td {
+  padding: 4px 0;
+  border: none;
+}
+.shops-table td:first-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+.shops-table a {
+  text-decoration: none;
+  color: var(--ink);
+}
+.shops-table a:hover {
+  color: var(--accent);
+}
+.shops-table .num {
+  text-align: right;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.free-col {
+  text-align: right;
+  white-space: nowrap;
+  padding-right: 8px !important;
+}
+.free-col .meta {
+  display: inline;
+  font-size: 10.5px;
+}
+.abroad {
+  display: inline;
+  margin-left: 5px;
+  font-size: 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0 3px;
+}
+.dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 7px;
+  vertical-align: middle;
+}
+.dot.ok {
+  background: var(--good);
+}
+.dot.est {
+  background: var(--line);
+  border: 1px solid var(--muted);
+}
+.legend {
+  margin: 9px 0 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* --- dialog summary --- */
+.dlg-summary {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 5px;
+}
+.dlg-summary b {
+  font-size: 14px;
+}
+.dlg-summary .meta {
+  display: inline-flex;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  box-shadow: var(--shadow);
+}
+.pad {
+  padding: 15px;
+}
+
+.status {
+  margin-bottom: 12px;
+}
+
+.grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
+}
+
+.product {
+  padding: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.product h3 {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+/* A full-width image: at 62px you could not tell a bag of atta from a bag of
+   rice. The price table is only two columns now, so it still fits. */
+.product-head {
+  display: block;
+}
+.product-id {
+  min-width: 0;
+  flex: 1;
+}
+.product-id .sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 3px;
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.brand {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--accent);
+}
+
+.thumb {
+  width: 100%;
+  height: 150px;
+  display: block;
+  object-fit: contain;
+  padding: 6px;
+  background: #fff;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  margin-bottom: 9px;
+}
+@media (prefers-color-scheme: dark) {
+  /* Product shots are shot on white; keep the plate white in dark mode too. */
+  .thumb {
+    background: #f6f4f1;
+  }
+}
+.thumb.placeholder {
+  display: grid;
+  place-items: center;
+  font-size: 34px;
+  background: var(--bg);
+}
+
+/* --- inline per-shop price table --- */
+.shop-table {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  overflow: hidden;
+}
+.shop-head,
+.shop-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 9px;
+  align-items: center;
+  padding: 6px 9px;
+}
+.shop-head {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+.shop-head span:not(:first-child),
+.shop-row > span:not(.shop-name) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.shop-row {
+  font-size: 12.5px;
+  text-decoration: none;
+  color: var(--ink);
+  border-bottom: 1px solid var(--line);
+}
+.shop-row:last-child {
+  border-bottom: none;
+}
+.shop-row:hover {
+  background: var(--accent-soft);
+}
+.shop-row.best {
+  background: color-mix(in srgb, var(--good) 11%, transparent);
+}
+.shop-row.out {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+.shop-name {
+  overflow: hidden;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.shop-name > :first-child,
+.shop-name {
+  text-overflow: ellipsis;
+}
+.free-over,
+.free-now {
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.free-over {
+  color: var(--muted);
+}
+.free-now {
+  color: var(--good);
+  font-weight: 700;
+}
+.shop-price {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.shop-row.best .shop-price {
+  color: var(--good);
+}
+.est {
+  color: var(--warn);
+  font-weight: 700;
+  margin-left: 1px;
+}
+.muted {
+  color: var(--muted);
+}
+
+.more {
+  align-self: flex-start;
+  padding: 3px 9px;
+  font-size: 12px;
+  border-radius: 7px;
+  color: var(--muted);
+}
+
+.saving-banner {
+  font-size: 12.5px;
+  background: color-mix(in srgb, var(--good) 13%, transparent);
+  color: var(--good);
+  padding: 6px 9px;
+  border-radius: 8px;
+}
+.saving-banner b {
+  font-variant-numeric: tabular-nums;
+}
+
+.count {
+  display: inline-block;
+  margin-left: 6px;
+  background: var(--line);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* --- explainer strip --- */
+.explainer {
+  padding-bottom: 12px;
+  margin-top: -4px;
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+.explainer b {
+  color: var(--ink);
+}
+.explainer-stats {
+  font-size: 12px;
+  opacity: 0.85;
+}
+.basket-empty .empty-note {
+  margin: 9px 0 0;
+  display: block;
+}
+
+.meta {
+  font-size: 12.5px;
+  color: var(--muted);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.pill {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+.pill.grey {
+  background: var(--bg);
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+.pill.good {
+  background: transparent;
+  color: var(--good);
+  border: 1px solid currentColor;
+}
+
+.row-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+}
+.row-actions button {
+  flex: 1;
+  padding: 7px 10px;
+  font-size: 13px;
+}
+
+.pager {
+  margin-top: 18px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+}
+
+.side {
+  position: sticky;
+  top: 76px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.side h2 {
+  margin: 0;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.empty-note {
+  margin: 10px 0 0;
+}
+
+.basket-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line);
+}
+.basket-item span {
+  flex: 1;
+}
+
+.plan {
+  margin-top: 16px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+.totals {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--muted);
+}
+.totals b {
+  color: var(--ink);
+  font-size: 16px;
+  display: block;
+  font-variant-numeric: tabular-nums;
+}
+.saving {
+  margin: 8px 0 0;
+}
+.saving b {
+  color: var(--good);
+}
+
+.parcel {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 10px;
+}
+.parcel h4 {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+.parcel-items {
+  margin-top: 7px;
+  font-size: 12.5px;
+}
+.free {
+  color: var(--good);
+}
+
+.warn {
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-size: 12px;
+  padding: 7px 9px;
+  border-radius: 7px;
+  margin-top: 7px;
+}
+.hint {
+  padding-top: 0;
+}
+
+.empty {
+  padding: 44px 18px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.shop-row {
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line);
+}
+.shop-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13.5px;
+}
+
+/* dialog */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  z-index: 50;
+}
+.dialog {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  max-width: 940px;
+  width: 100%;
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+}
+.dlg-head {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.dlg-head h3 {
+  margin: 0 0 4px;
+  font-size: 17px;
+}
+.dlg-body {
+  padding: 4px 18px 18px;
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+th,
+td {
+  padding: 9px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+th {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 600;
+}
+td.num,
+th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+tr.best td {
+  background: var(--accent-soft);
+}
+.footnote {
+  margin-top: 12px;
+  display: block;
+}
+
+a {
+  color: var(--accent);
+}
+
+/* --- empty state & hidden-match notice --- */
+.empty-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+.empty p {
+  margin: 0 0 10px;
+}
+.empty em {
+  color: var(--ink);
+  font-style: normal;
+  font-weight: 600;
+}
+.hidden-note {
+  margin-top: 16px;
+  padding: 11px 14px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
+.link-inline {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* "clear" sits in the block heading, only while a filter is active */
+.cats h2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.clear-filter {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* sub-categories, indented under the open parent */
+.cats li.sub button {
+  padding-left: 20px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.cats li.sub button::before {
+  content: "";
+  position: absolute;
+  margin-left: -11px;
+  margin-top: 8px;
+  width: 5px;
+  height: 1px;
+  background: var(--line);
+}
+.cats li.sub button.active {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* ------------------------------------------------------------------ mobile */
+.filters-toggle { display: none; }
+
+@media (max-width: 760px) {
+  /* The header was 267px of a 844px screen — a third of the phone gone before
+     any product. Drop the strapline, keep the toolbar to two tight rows. */
+  .bar { padding: 9px 0; gap: 8px; row-gap: 8px; }
+  .logo { font-size: 17px; }
+  .logo .tag { display: none; }
+  .explainer { display: none; }
+  .wrap { padding: 0 12px; }
+  input[type="search"] { flex: 1 1 100%; order: 3; }
+  select { flex: 1 1 auto; font-size: 13px; padding: 8px 10px; }
+  label.check { font-size: 13px; }
+  main { padding: 12px 0 40px; }
+
+  /* Filters collapse behind a button instead of pushing results down. */
+  .filters-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    grid-area: rail;
+    width: 100%;
+    min-height: 44px;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+  .dot-on {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent);
+  }
+  .rail { display: none; }
+  .rail.open {
+    display: flex;
+    grid-area: rail;
+    margin-bottom: 10px;
+  }
+
+  /* Finger-sized targets: 112 controls were under 36px. */
+  .cats button { min-height: 42px; font-size: 14px; }
+  .cats li.sub button { min-height: 38px; }
+  .shop-row { min-height: 44px; }
+  .row-actions button { min-height: 42px; font-size: 14px; }
+  .shops-toggle { min-height: 46px; }
+  .basket-item input { min-height: 38px; width: 60px; }
+  .more { min-height: 38px; }
+
+  /* Cards: bigger type, image still recognisable. */
+  .grid { grid-template-columns: 1fr; gap: 10px; }
+  .thumb { height: 170px; }
+  .product h3 { font-size: 15px; }
+  .shop-row { font-size: 13.5px; }
+
+  /* Full-screen dialog reads better than a floating box on a phone. */
+  .backdrop { padding: 0; }
+  .dialog { max-height: 100vh; height: 100%; border-radius: 0; }
+  .dlg-head { padding: 12px 14px; }
+  .dlg-body { padding: 4px 14px 18px; }
+  table { font-size: 12.5px; }
+  th, td { padding: 8px 6px; }
+}

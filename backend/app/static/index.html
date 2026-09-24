@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DesiPrice — Indian grocery price comparison in Poland</title>
+<style>
+  :root {
+    --bg: #fbf9f6; --panel: #fff; --ink: #1c1917; --muted: #78716c;
+    --line: #e7e2dc; --accent: #c2410c; --accent-soft: #fff1e9;
+    --good: #15803d; --warn: #b45309; --warn-soft: #fef6e7;
+    --shadow: 0 1px 2px rgba(28,25,23,.06), 0 4px 12px rgba(28,25,23,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #17161a; --panel: #211f24; --ink: #f5f3f0; --muted: #a8a29e;
+      --line: #35323a; --accent: #fb923c; --accent-soft: #3a2415;
+      --good: #4ade80; --warn: #fbbf24; --warn-soft: #3a2f15;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  header {
+    position: sticky; top: 0; z-index: 20; background: var(--panel);
+    border-bottom: 1px solid var(--line); box-shadow: var(--shadow);
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
+  .bar { display: flex; gap: 14px; align-items: center; padding: 14px 0; flex-wrap: wrap; }
+  .logo { font-weight: 700; font-size: 19px; letter-spacing: -.02em; white-space: nowrap; }
+  .logo span { color: var(--accent); }
+  .tag { font-size: 12px; color: var(--muted); font-weight: 400; }
+  input[type=search], select {
+    font: inherit; padding: 9px 12px; border: 1px solid var(--line);
+    border-radius: 9px; background: var(--bg); color: var(--ink);
+  }
+  input[type=search] { flex: 1 1 260px; min-width: 200px; }
+  input[type=search]:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  button {
+    font: inherit; cursor: pointer; border-radius: 9px; padding: 9px 14px;
+    border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+  }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  label.check { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); }
+  main { padding: 22px 0 64px; }
+  .layout { display: grid; grid-template-columns: 1fr 340px; gap: 22px; align-items: start; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 13px; box-shadow: var(--shadow);
+  }
+  .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(258px, 1fr)); }
+  .product { padding: 14px; display: flex; flex-direction: column; gap: 9px; }
+  .product h3 { margin: 0; font-size: 14.5px; line-height: 1.35; font-weight: 600; }
+  .thumb {
+    width: 100%; height: 132px; object-fit: contain; background: var(--bg);
+    border-radius: 9px; border: 1px solid var(--line);
+  }
+  .thumb.placeholder { display: grid; place-items: center; color: var(--muted); font-size: 12px; }
+  .price { font-size: 21px; font-weight: 700; letter-spacing: -.02em; }
+  .price small { font-size: 12px; font-weight: 500; color: var(--muted); }
+  .meta { font-size: 12.5px; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill {
+    font-size: 11px; padding: 2px 8px; border-radius: 999px;
+    background: var(--accent-soft); color: var(--accent); font-weight: 600;
+  }
+  .pill.grey { background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+  .pill.good { background: transparent; color: var(--good); border: 1px solid currentColor; }
+  .row-actions { display: flex; gap: 8px; margin-top: auto; }
+  .row-actions button { flex: 1; padding: 7px 10px; font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { padding: 9px 10px; text-align: left; border-bottom: 1px solid var(--line); }
+  th { font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.best td { background: var(--accent-soft); }
+  .side { position: sticky; top: 76px; display: flex; flex-direction: column; gap: 14px; }
+  .side h2, .panel h2 { margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  .pad { padding: 15px; }
+  .basket-item { display: flex; gap: 8px; align-items: center; font-size: 13px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+  .basket-item span { flex: 1; }
+  .basket-item input { width: 52px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); font: inherit; }
+  .link { background: none; border: none; color: var(--muted); cursor: pointer; padding: 2px 5px; font-size: 15px; }
+  .parcel { border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-top: 10px; }
+  .parcel h4 { margin: 0 0 4px; font-size: 14px; }
+  .warn { background: var(--warn-soft); color: var(--warn); font-size: 12px; padding: 7px 9px; border-radius: 7px; margin-top: 7px; }
+  .empty { padding: 44px 18px; text-align: center; color: var(--muted); }
+  dialog {
+    border: 1px solid var(--line); border-radius: 14px; padding: 0; max-width: 940px;
+    width: calc(100% - 32px); background: var(--panel); color: var(--ink); box-shadow: var(--shadow);
+  }
+  dialog::backdrop { background: rgba(0,0,0,.45); }
+  .dlg-head { padding: 16px 18px; border-bottom: 1px solid var(--line); display: flex; gap: 12px; align-items: flex-start; }
+  .dlg-body { padding: 4px 18px 18px; max-height: 66vh; overflow: auto; }
+  .totals { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+  .totals b { color: var(--ink); font-size: 16px; display: block; font-variant-numeric: tabular-nums; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap bar">
+    <div class="logo">Desi<span>Price</span> <span class="tag">Indian groceries · Poland</span></div>
+    <input type="search" id="q" placeholder="Search: basmati, atta, ghee, garam masala…" autocomplete="off">
+    <select id="sort">
+      <option value="landed">Cheapest delivered</option>
+      <option value="price">Lowest price</option>
+      <option value="unit">Cheapest per kg/l</option>
+      <option value="offers">Most shops</option>
+      <option value="name">Name A–Z</option>
+    </select>
+    <label class="check"><input type="checkbox" id="multi" checked> comparable only</label>
+  </div>
+</header>
+
+<main class="wrap layout">
+  <section>
+    <div class="meta" id="status" style="margin-bottom:12px"></div>
+    <div class="grid" id="results"></div>
+    <div id="pager" style="margin-top:18px; display:flex; gap:10px; justify-content:center"></div>
+  </section>
+
+  <aside class="side">
+    <div class="card pad">
+      <h2>Shopping list</h2>
+      <div id="basket"></div>
+      <button class="primary" id="optimise" style="width:100%; margin-top:12px">Find cheapest split</button>
+      <div id="plan"></div>
+    </div>
+    <div class="card pad">
+      <h2>Shops</h2>
+      <div id="shops" style="margin-top:8px"></div>
+    </div>
+  </aside>
+</main>
+
+<dialog id="detail">
+  <div class="dlg-head">
+    <div style="flex:1">
+      <h3 id="d-name" style="margin:0 0 4px; font-size:17px"></h3>
+      <div class="meta" id="d-meta"></div>
+    </div>
+    <button onclick="document.getElementById('detail').close()">Close</button>
+  </div>
+  <div class="dlg-body"><div id="d-offers"></div></div>
+</dialog>
+
+<script>
+const API = '/api';
+const fmt = n => (n == null ? '—' : Number(n).toFixed(2) + ' zł');
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// A comparison site is only useful where more than one shop sells the thing,
+// so that is the default view.
+let state = { q: '', sort: 'landed', multi: true, page: 1, pageSize: 24 };
+let basket = JSON.parse(localStorage.getItem('desicena.basket') || '{}');
+
+const saveBasket = () => {
+  localStorage.setItem('desicena.basket', JSON.stringify(basket));
+  renderBasket();
+};
+
+async function api(path, opts) {
+  const res = await fetch(API + path, opts);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+// ---------- search ----------
+async function search() {
+  const params = new URLSearchParams({
+    sort: state.sort, page: state.page, page_size: state.pageSize,
+    multi_shop_only: state.multi,
+  });
+  if (state.q) params.set('q', state.q);
+
+  document.getElementById('status').textContent = 'Searching…';
+  const data = await api('/search?' + params);
+
+  document.getElementById('status').textContent =
+    `${data.total} products${state.q ? ` dla „${state.q}”` : ''}`;
+
+  const box = document.getElementById('results');
+  if (!data.results.length) {
+    box.innerHTML = `<div class="card empty">No results. Run <code>ingest</code> to pull the shop catalogues.</div>`;
+  } else {
+    box.innerHTML = data.results.map(card).join('');
+  }
+
+  const pages = Math.ceil(data.total / data.page_size);
+  document.getElementById('pager').innerHTML = pages > 1
+    ? `<button ${state.page <= 1 ? 'disabled' : ''} onclick="go(${state.page - 1})">← back</button>
+       <span class="meta" style="align-self:center">${state.page} / ${pages}</span>
+       <button ${state.page >= pages ? 'disabled' : ''} onclick="go(${state.page + 1})">next →</button>`
+    : '';
+}
+
+function card(p) {
+  const img = p.image_url
+    ? `<img class="thumb" src="${esc(p.image_url)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'thumb placeholder',textContent:'no image'}))">`
+    : `<div class="thumb placeholder">no image</div>`;
+
+  const unit = p.best_unit_price_pln
+    ? `<span>${fmt(p.best_unit_price_pln)}/${esc(p.base_unit)}</span>` : '';
+  // A wide spread is the whole reason to use a comparison site — surface it.
+  const spread = p.spread_pct >= 15
+    ? `<span class="pill">spread ${p.spread_pct}%</span>` : '';
+  const shops = `<span class="pill ${p.shop_count > 1 ? 'good' : 'grey'}">${p.shop_count} ${p.shop_count === 1 ? 'sklep' : 'sklepy'}</span>`;
+
+  return `<article class="card product">
+    ${img}
+    <h3>${esc(p.name)}</h3>
+    <div class="price">${fmt(p.min_price_pln)} <small>from</small></div>
+    <div class="meta">
+      ${p.best_landed_pln ? `<span>delivered from <b>${fmt(p.best_landed_pln)}</b></span>` : ''}
+      ${unit}
+    </div>
+    <div class="meta">${shops}${spread}</div>
+    <div class="row-actions">
+      <button onclick="openDetail('${esc(p.slug)}')">Compare</button>
+      <button class="primary" onclick="addToBasket(${p.id}, ${JSON.stringify(p.name).replace(/"/g, '&quot;')})">+ list</button>
+    </div>
+  </article>`;
+}
+
+const go = page => { state.page = page; search(); window.scrollTo({top: 0, behavior: 'smooth'}); };
+
+// ---------- product detail ----------
+async function openDetail(slug) {
+  const p = await api('/products/' + slug);
+  document.getElementById('d-name').textContent = p.name;
+  document.getElementById('d-meta').innerHTML =
+    `${p.brand ? `<span class="pill">${esc(p.brand)}</span>` : ''}
+     <span>${p.shop_count} shops · ${p.offer_count} offers</span>
+     ${p.spread_pct ? `<span>spread ${p.spread_pct}%</span>` : ''}`;
+
+  const rows = p.offers.map((o, i) => `
+    <tr class="${i === 0 && o.in_stock ? 'best' : ''}">
+      <td>
+        <b>${esc(o.shop_name)}</b>
+        ${!o.in_stock ? '<span class="pill grey">out of stock</span>' : ''}
+        <div class="meta" style="margin-top:2px">${esc(o.title.slice(0, 70))}</div>
+      </td>
+      <td class="num">${fmt(o.price_pln)}</td>
+      <td class="num">${o.unit_price_pln ? fmt(o.unit_price_pln) + '/' + esc(o.base_unit) : '—'}</td>
+      <td class="num">
+        ${o.free_shipping_applied ? '<span class="pill good">free</span>' : fmt(o.shipping_pln)}
+        ${o.shipping_estimated && !o.free_shipping_applied ? '<div class="meta">est.</div>' : ''}
+      </td>
+      <td class="num">${o.min_days != null ? o.min_days + '–' + o.max_days + ' days' : '—'}</td>
+      <td class="num"><b>${fmt(o.landed_total_pln)}</b></td>
+      <td><a href="${esc(o.url)}" target="_blank" rel="noopener nofollow">go →</a></td>
+    </tr>
+    ${o.amount_to_free_shipping > 0 ? `<tr><td colspan="7" class="meta" style="padding-top:0">
+       spend ${fmt(o.amount_to_free_shipping)} w ${esc(o.shop_name)} more for free delivery</td></tr>` : ''}
+  `).join('');
+
+  document.getElementById('d-offers').innerHTML = `
+    <table>
+      <thead><tr>
+        <th>Shop</th><th class="num">Price</th><th class="num">Per unit</th>
+        <th class="num">Delivery</th><th class="num">Time</th><th class="num">Delivered</th><th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <p class="meta" style="margin-top:12px">
+      “est.” = the shop only quotes delivery at checkout, so that figure is estimated.
+      Prices shown for 1 item. In the list we compute delivery for the whole order.
+    </p>`;
+  document.getElementById('detail').showModal();
+}
+
+// ---------- basket ----------
+function addToBasket(id, name) {
+  basket[id] = basket[id] || { name, qty: 0 };
+  basket[id].qty += 1;
+  saveBasket();
+}
+
+function renderBasket() {
+  const box = document.getElementById('basket');
+  const ids = Object.keys(basket);
+  document.getElementById('optimise').disabled = !ids.length;
+  if (!ids.length) {
+    box.innerHTML = `<p class="meta" style="margin:10px 0 0">
+      Add products and we will work out the cheapest way to split your order across shops, delivery included.</p>`;
+    document.getElementById('plan').innerHTML = '';
+    return;
+  }
+  box.innerHTML = ids.map(id => `
+    <div class="basket-item">
+      <span>${esc(basket[id].name)}</span>
+      <input type="number" min="1" max="99" value="${basket[id].qty}"
+             onchange="basket[${id}].qty = Math.max(1, +this.value); saveBasket()">
+      <button class="link" onclick="delete basket[${id}]; saveBasket()" title="Remove">×</button>
+    </div>`).join('');
+}
+
+async function optimise() {
+  const btn = document.getElementById('optimise');
+  btn.disabled = true; btn.textContent = 'Calculating…';
+  try {
+    const data = await api('/basket/optimize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: Object.entries(basket).map(([id, v]) => ({ product_id: +id, quantity: v.qty })),
+      }),
+    });
+    renderPlan(data);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Find cheapest split';
+  }
+}
+
+function renderPlan(data) {
+  const box = document.getElementById('plan');
+  if (!data.best) {
+    box.innerHTML = `<div class="warn">Nie znaleziono offers dla tego koszyka.</div>`;
+    return;
+  }
+  const b = data.best;
+  const parcels = b.parcels.map(p => `
+    <div class="parcel">
+      <h4>${esc(p.shop_name)}</h4>
+      <div class="meta">
+        ${fmt(p.subtotal_pln)} + delivery
+        ${p.free_shipping_applied ? '<b style="color:var(--good)">gratis</b>' : fmt(p.shipping_pln)}
+        ${p.shipping_estimated && p.shipping_pln > 0 ? '(est.)' : ''}
+        · ${p.min_days}–${p.max_days} days · ${(p.weight_grams / 1000).toFixed(1)} kg
+      </div>
+      <div style="margin-top:7px; font-size:12.5px">
+        ${p.items.map(i => `<div>${i.quantity} × ${esc(i.product_name)} <span class="meta">${fmt(i.line_total_pln)}</span></div>`).join('')}
+      </div>
+      ${p.warnings.map(w => `<div class="warn">${esc(w)}</div>`).join('')}
+    </div>`).join('');
+
+  box.innerHTML = `
+    <div style="margin-top:16px; border-top:1px solid var(--line); padding-top:14px">
+      <div class="totals">
+        <div>total delivered <b>${fmt(b.total_pln)}</b></div>
+        <div>goods <b>${fmt(b.goods_pln)}</b></div>
+        <div>delivery <b>${fmt(b.shipping_pln)}</b></div>
+      </div>
+      ${data.savings_vs_single_shop_pln > 0.009 ? `<p class="meta" style="margin:10px 0 0">
+        You save <b style="color:var(--good)">${fmt(data.savings_vs_single_shop_pln)}</b>
+        versus buying everything in one shop (${fmt(data.single_shop.total_pln)}).</p>` : ''}
+      ${data.savings_vs_naive_pln > 0.009 ? `<p class="meta" style="margin:6px 0 0">
+        And <b style="color:var(--good)">${fmt(data.savings_vs_naive_pln)}</b> versus buying
+        each item wherever it is cheapest (${data.naive.parcels.length} parcels,
+        ${fmt(data.naive.total_pln)}).</p>` : ''}
+      ${parcels}
+    </div>`;
+}
+
+// ---------- shops ----------
+async function loadShops() {
+  const shops = await api('/shops');
+  document.getElementById('shops').innerHTML = shops.map(s => `
+    <div style="padding:7px 0; border-bottom:1px solid var(--line)">
+      <div style="display:flex; justify-content:space-between; gap:8px">
+        <b style="font-size:13.5px">${esc(s.name)}</b>
+        <span class="meta">${s.offer_count.toLocaleString('en')} offers</span>
+      </div>
+      <div class="meta">
+        ${esc(s.country)} · ${esc(s.currency)}
+        ${s.free_over ? `· free over ${s.free_over}` : ''}
+        <span class="pill ${s.shipping_confidence === 'high' ? 'good' : 'grey'}">
+          delivery: ${s.shipping_confidence === 'high' ? 'potwierdzona' : 'szacowana'}</span>
+      </div>
+    </div>`).join('');
+}
+
+// ---------- wiring ----------
+let timer;
+document.getElementById('q').addEventListener('input', e => {
+  clearTimeout(timer);
+  timer = setTimeout(() => { state.q = e.target.value.trim(); state.page = 1; search(); }, 250);
+});
+document.getElementById('sort').addEventListener('change', e => {
+  state.sort = e.target.value; state.page = 1; search();
+});
+document.getElementById('multi').addEventListener('change', e => {
+  state.multi = e.target.checked; state.page = 1; search();
+});
+document.getElementById('optimise').addEventListener('click', optimise);
+
+renderBasket();
+loadShops();
+search();
+</script>
+</body>
+</html>

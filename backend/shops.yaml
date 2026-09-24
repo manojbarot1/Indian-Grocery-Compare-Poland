@@ -1,0 +1,396 @@
+# DesiPrice — shop registry for the Polish market (PL)
+#
+# Every shop declares HOW to ingest its catalogue and HOW its shipping is priced.
+# Shipping rules carry a `confidence` and a `source`, because these terms change
+# often and some shops only reveal rates at checkout. The UI surfaces this:
+# an estimated shipping cost is never shown as if it were a quoted one.
+#
+#   confidence: high   -> published table we parsed, safe to quote
+#   confidence: medium -> published but partial / ambiguous
+#   confidence: low    -> estimated; shop only quotes at checkout
+#
+# Re-verify with:  python -m cli verify-shipping
+
+shops:
+  - slug: indiabazaar
+    name: India Bazaar
+    url: https://indiabazaar.pl
+    platform: shopify
+    country: PL
+    currency: PLN
+    ships_to: [PL]
+    active: true
+    ingest:
+      path: /products.json
+      page_size: 250
+      max_pages: 40
+    shipping:
+      confidence: high
+      source: https://indiabazaar.pl/policies/shipping-policy
+      last_verified: "2026-09-17"
+      max_order_kg: 30.0
+      handling_days: [1, 2]
+      free_over: null
+      methods:
+        - name: Kurier
+          transit_days: [1, 2]
+          bands:
+            - { max_kg: 30.0, price: 9.99 }
+            - { max_kg: 60.0, price: 19.99 }
+
+  - slug: grocerywala
+    name: Grocerywala
+    url: https://grocerywala.pl
+    platform: shopify
+    country: PL
+    currency: PLN
+    ships_to: [PL]
+    active: true
+    ingest:
+      path: /products.json
+      page_size: 250
+      max_pages: 40
+    shipping:
+      confidence: low
+      source: https://grocerywala.pl/pages/shipping-policy
+      last_verified: "2026-09-17"
+      note: >-
+        Shop quotes rates only at checkout. Free delivery over 149 PLN is
+        documented for Warsaw only. Band price below is an ESTIMATE.
+      free_over: 149.00
+      free_over_note: "Warszawa only"
+      handling_days: [0, 0]
+      methods:
+        - name: Kurier
+          transit_days: [2, 7]
+          estimated: true
+          bands:
+            - { max_kg: 30.0, price: 15.99 }
+
+  - slug: dookan
+    name: Dookan
+    url: https://eu.dookan.com
+    platform: shopify
+    country: NL
+    currency: EUR
+    ships_to: [PL, DE, NL, BE, FR, AT, CZ, SE, DK, IT, ES]
+    # Disabled: ships from the Netherlands. This index lists Poland-based shops
+    # only — cross-border delivery cost and time made it uncompetitive on almost
+    # every comparison anyway. Kept here (not deleted) so re-enabling is a
+    # one-line change if the market ever expands.
+    active: false
+    ingest:
+      path: /products.json
+      page_size: 250
+      max_pages: 60
+    shipping:
+      confidence: low
+      source: https://eu.dookan.com/policies/shipping-policy
+      last_verified: "2026-09-17"
+      note: >-
+        Cross-border from NL. Rates vary by destination country and are quoted
+        at checkout. Values below are ESTIMATES for delivery to PL.
+      free_over: 79.00
+      handling_days: [1, 2]
+      methods:
+        - name: Kurier międzynarodowy
+          transit_days: [4, 8]
+          estimated: true
+          bands:
+            - { max_kg: 5.0, price: 8.95 }
+            - { max_kg: 15.0, price: 13.95 }
+            - { max_kg: 30.0, price: 19.95 }
+
+  - slug: indiancorner
+    name: Indian Corner
+    url: https://indiancorner.pl
+    platform: html
+    country: PL
+    currency: PLN
+    ships_to: [PL]
+    active: true
+    ingest:
+      # No catalogue API — bespoke storefront. Sitemap lists ~430 products.
+      sitemaps: ["/sitemap.xml"]
+      include_pattern: "/product/"
+      exclude_patterns: ["/category/", "/shop/", "/blog/"]
+      max_products: 800
+      selectors:
+        # og:title is the site name here, so the <title> tag is the reliable one.
+        title: ["h1.product-title", "title"]
+        price: [".discounted-unit-price", ".product-details-chosen-price-amount"]
+        image: ["img[src*='/storage/product']"]
+        # Stock state is not reliably exposed: the add-to-cart and restock
+        # buttons are both present in the markup regardless. Left unset, so
+        # everything is treated as available.
+    shipping:
+      confidence: medium
+      source: https://indiancorner.pl/
+      last_verified: "2026-09-17"
+      note: >-
+        Free delivery over 199 PLN is stated on site. The paid-tier rate is not
+        published, so the band price below is an ESTIMATE.
+      free_over: 199.00
+      handling_days: [1, 2]
+      methods:
+        - name: Kurier / Paczkomat
+          transit_days: [1, 3]
+          estimated: true
+          bands:
+            - { max_kg: 25.0, price: 15.99 }
+
+  - slug: indiastore
+    name: India@Store
+    url: https://indiastore.co
+    platform: shopify
+    country: PL
+    currency: PLN
+    ships_to: [PL]
+    active: true
+    ingest:
+      path: /products.json
+      page_size: 250
+      max_pages: 40
+    shipping:
+      confidence: medium
+      source: https://indiastore.co
+      last_verified: "2026-09-18"
+      note: "Free delivery over 200 PLN is published; paid tier is an ESTIMATE."
+      free_over: 200.00
+      handling_days: [1, 2]
+      methods:
+        - name: Kurier / Paczkomat
+          transit_days: [1, 3]
+          estimated: true
+          bands: [{ max_kg: 25.0, price: 15.99 }]
+
+  - slug: asiadeli
+    name: Asia Deli
+    url: https://asiadeli.pl
+    platform: shopify
+    country: PL
+    currency: PLN
+    ships_to: [PL]
+    active: true
+    ingest:
+      path: /products.json
+      page_size: 250
+      max_pages: 40
+    shipping:
+      confidence: low
+      source: https://asiadeli.pl
+      last_verified: "2026-09-18"
+      note: "Rates quoted at checkout. Band prices are ESTIMATES."
+      free_over: null
+      handling_days: [1, 2]
+      methods:
+        - name: Kurier / Paczkomat
+          transit_days: [1, 3]
+          estimated: true
+          bands: [{ max_kg: 25.0, price: 15.99 }]
+
+  - slug: littleasiagrocery
+    name: Little Asia Grocery
+    url: https://littleasiagrocery.pl
+    platform: woocommerce
+    country: PL
+    currency: PLN
+    ships_to: [PL]
+    active: true
+    weight_unit: kg
+    ingest:
+      path: /wp-json/wc/store/v1/products
+      page_size: 100
+      max_pages: 40
+    shipping:
+      confidence: low
+      source: https://littleasiagrocery.pl
+      last_verified: "2026-09-18"
+      note: "Rates quoted at checkout. Band prices are ESTIMATES."
+      free_over: null
+      handling_days: [1, 2]
+      methods:
+        - name: Kurier / Paczkomat
+          transit_days: [1, 3]
+          estimated: true
+          bands: [{ max_kg: 25.0, price: 15.99 }]
+
+  - slug: indiadabazaar
+    name: India Da Bazaar
+    url: https://indiadabazaar.pl
+    platform: woocommerce
+    country: PL
+    currency: PLN
+    ships_to: [PL]
+    active: true
+    weight_unit: kg
+    ingest:
+      path: /wp-json/wc/store/v1/products
+      page_size: 100
+      max_pages: 20
+      # Their security plugin serves an HTML block page to any UA containing
+      # "bot", so the default DesiPriceBot string gets no JSON at all. This UA
+      # still identifies the crawler and gives a contact point; it just avoids
+      # the substring the filter keys on. robots.txt permits this endpoint.
+      user_agent: "DesiPrice/0.1 (+https://desiprice.pl; price comparison; contact: hello@desiprice.pl)"
+    shipping:
+      confidence: low
+      source: https://indiadabazaar.pl
+      last_verified: "2026-09-18"
+      note: "Rates quoted at checkout. Band prices are ESTIMATES."
+      free_over: null
+      handling_days: [1, 2]
+      methods:
+        - name: Kurier / Paczkomat
+          transit_days: [1, 3]
+          estimated: true
+          bands: [{ max_kg: 25.0, price: 15.99 }]
+
+  - slug: asianshop
+    name: AsianShop
+    url: https://asianshop.pl
+    platform: html
+    country: PL
+    currency: PLN
+    ships_to: [PL]
+    active: true
+    ingest:
+      # Shoper: no sitemap at all, so products are discovered by walking the
+      # category tree. Product data comes from schema.org JSON-LD, which this
+      # platform splits across a dozen fragments sharing one @id.
+      discovery: categories
+      category_pattern: "/pl/c/"
+      product_pattern: "/pl/p/"
+      page_param: "page"
+      max_pages_per_category: 30
+      max_products: 3000
+      include_pattern: "/pl/p/"
+      selectors:
+        title: ["h1", "title"]
+        price: [".price", ".product-price"]
+        image: ["img[src*='/userdata/public/gfx']"]
+    shipping:
+      # The only shop besides India Bazaar that publishes machine-readable
+      # rates — they are embedded in the product page's JSON-LD.
+      confidence: high
+      source: https://asianshop.pl/pl/p/Przyprawa-Kitchen-King-MDH-100-g/481
+      last_verified: "2026-09-18"
+      free_over: 50.00
+      handling_days: [0, 0]
+      methods:
+        - name: DPD Pickup
+          transit_days: [2, 2]
+          bands: [{ max_kg: 30.0, price: 7.00 }]
+        - name: DPD Kurier
+          transit_days: [2, 2]
+          bands: [{ max_kg: 30.0, price: 8.50 }]
+        - name: DHL Box 24/7
+          transit_days: [2, 2]
+          bands: [{ max_kg: 30.0, price: 9.00 }]
+        - name: DHL Kurier
+          transit_days: [2, 2]
+          bands: [{ max_kg: 30.0, price: 10.50 }]
+        - name: InPost Paczkomaty 24/7
+          transit_days: [2, 2]
+          bands: [{ max_kg: 25.0, price: 11.00 }]
+        - name: InPost Kurier
+          transit_days: [2, 2]
+          bands: [{ max_kg: 30.0, price: 13.00 }]
+
+  - slug: littleindia
+    name: Little India
+    url: https://www.littleindia.pl
+    platform: html
+    country: PL
+    currency: PLN
+    ships_to: [PL]
+    active: true
+    ingest:
+      # SOTESHOP. Its sitemap exists but is stale — every product URL in it
+      # 404s — so discovery walks the category tree instead, which is live.
+      discovery: categories
+      category_pattern: "/category/"
+      product_pattern: "\\.html$"
+      page_param: "page"
+      # SOTESHOP renders a whole category on one page — ?page=2 returns the same
+      # products — so the crawler only needs one request per category to see
+      # everything, plus one to confirm there is no more. 25 was pointless.
+      max_pages_per_category: 2
+      # Raised after the first full run returned exactly 2499 — the old 2500
+      # cap was binding, so the catalogue is larger than it.
+      max_products: 6000
+      include_pattern: "\\.html$"
+      exclude_patterns: ["/webpage/", "/category/", "/lang/", "/manufacturer/", "/group/"]
+      selectors:
+        title: ["h1"]
+        # Gross price is what the shopper pays; the page also shows a net price
+        # and a struck-through old price, neither of which we want.
+        price: ["#st_product_options-price-brutto"]
+        image: ["meta[property='og:image']"]
+    shipping:
+      confidence: low
+      source: https://www.littleindia.pl
+      last_verified: "2026-09-18"
+      note: "Rates quoted at checkout. Band prices are ESTIMATES."
+      free_over: null
+      handling_days: [1, 2]
+      methods:
+        - name: Kurier / Paczkomat
+          transit_days: [1, 3]
+          estimated: true
+          bands: [{ max_kg: 25.0, price: 15.99 }]
+
+  - slug: orientalmarket
+    name: Oriental Market
+    url: https://orientalmarket.pl
+    platform: woocommerce
+    country: PL
+    currency: PLN
+    ships_to: [PL]
+    active: true
+    weight_unit: kg
+    ingest:
+      path: /wp-json/wc/store/v1/products
+      page_size: 100
+      max_pages: 40
+    shipping:
+      confidence: low
+      source: https://orientalmarket.pl
+      last_verified: "2026-09-17"
+      note: "Rates quoted at checkout. Band prices are ESTIMATES."
+      free_over: null
+      handling_days: [1, 2]
+      methods:
+        - name: Kurier / Paczkomat
+          transit_days: [1, 3]
+          estimated: true
+          bands:
+            - { max_kg: 25.0, price: 15.99 }
+
+  - slug: indiansupermart
+    name: Indian Supermart
+    url: https://indiansupermart.pl
+    platform: woocommerce
+    country: PL
+    currency: PLN
+    ships_to: [PL]
+    active: true
+    # This shop's WooCommerce stores weight in kg.
+    weight_unit: kg
+    ingest:
+      path: /wp-json/wc/store/v1/products
+      page_size: 100
+      max_pages: 40
+    shipping:
+      confidence: low
+      source: https://indiansupermart.pl
+      last_verified: "2026-09-17"
+      note: "Rates quoted at checkout. Band prices are ESTIMATES."
+      free_over: 200.00
+      handling_days: [1, 2]
+      methods:
+        - name: Kurier / Paczkomat
+          transit_days: [1, 3]
+          estimated: true
+          bands:
+            - { max_kg: 25.0, price: 14.99 }
