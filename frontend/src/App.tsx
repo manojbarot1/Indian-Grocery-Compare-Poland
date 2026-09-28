@@ -18,6 +18,7 @@ import {
   type Stats,
 } from "./lib/api";
 import { useBasket } from "./lib/useBasket";
+import { useGlassGlint } from "./lib/useGlassGlint";
 
 const SORTS = [
   { value: "price", label: "Sort: lowest price" },
@@ -50,6 +51,7 @@ export default function App() {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const { basket, add, setQuantity, remove, clear, items } = useBasket();
+  useGlassGlint();
 
   useEffect(() => {
     const timer = setTimeout(() => {

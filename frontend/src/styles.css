@@ -1297,3 +1297,47 @@ button.link { background: none; border: none; box-shadow: none; backdrop-filter:
   label.check input[type="checkbox"] { width: 20px; height: 20px; }
   .freshness { font-size: 11px; }
 }
+
+/* --- the glint ----------------------------------------------------------
+   The reference puts a mouse-tracked specular highlight on almost every
+   panel — light moving across the slab as the pointer crosses it. Done as
+   ::after rather than a DOM node so no component needs an extra span, and
+   driven by --mouse-x / --mouse-y set from a single delegated listener.   */
+.card::after,
+.dialog::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle 300px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(255, 255, 255, 0.1) 40%,
+    transparent 80%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 0;
+}
+
+/* Hover-only, so a touch screen never paints it. */
+@media (hover: hover) and (pointer: fine) {
+  .card:hover::after,
+  .dialog::after { opacity: 1; }
+
+  .card:hover {
+    border-color: rgba(255, 255, 255, 0.6);
+    box-shadow:
+      0 24px 60px -12px rgba(0, 0, 0, 0.65),
+      0 0 25px rgba(255, 255, 255, 0.2),
+      0 1px 0 rgba(255, 255, 255, 0.85) inset;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card::after, .dialog::after { display: none; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .card::after, .dialog::after { display: none; }
+}
