@@ -82,9 +82,52 @@ def match(
 
 @cli.command()
 def refresh(shop: list[str] = typer.Option(None, "--shop")):
-    """ingest + match + prune, the full nightly job."""
-    ingest(shop=shop, dry_run=False)
-    match(rematch_all=False)
+    """ingest + match + prune, the full nightly job.
+
+    Calls the underlying functions rather than the `ingest` command, because
+    that command exits non-zero as soon as any shop fails — and with a shop or
+    two routinely down or rate-limiting, that meant the nightly run ingested
+    everything and then never matched it. A shop being unreachable must not
+    stop the rest of the catalogue being processed.
+
+    Exits non-zero only when nothing at all could be ingested, which is the
+    case actually worth alerting on.
+    """
+    init_db()
+    with SessionLocal() as session:
+        load_shops(session)
+        results = ingest_all(session, only=list(shop) if shop else None)
+
+        for result in results:
+            if result.ok:
+                typer.echo(
+                    f"  {result.shop_slug:18} fetched={result.fetched:<6} "
+                    f"new={result.created:<5} upd={result.updated:<6} "
+                    f"delisted={result.delisted} placeholder={result.skipped_placeholder}"
+                )
+            else:
+                typer.secho(f"  {result.shop_slug:18} FAILED  {result.error}", fg="red")
+
+        failures = [r for r in results if not r.ok]
+        typer.echo(f"\n{len(results) - len(failures)}/{len(results)} shops ingested")
+
+        if results and len(failures) == len(results):
+            typer.secho("every shop failed; skipping match", fg="red")
+            raise typer.Exit(code=1)
+
+        stats_ = match_offers(session, rematch_all=False)
+        pruned = prune_orphan_products(session)
+
+    typer.echo(
+        f"matched={stats_['matched']} created={stats_['created']} "
+        f"skipped={stats_['skipped']} pruned={pruned}"
+    )
+    if failures:
+        typer.secho(
+            f"note: {len(failures)} shop(s) unreachable this run — "
+            "their existing offers are untouched",
+            fg="yellow",
+        )
 
 
 @cli.command("reset-matches")

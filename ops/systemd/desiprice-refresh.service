@@ -1,0 +1,14 @@
+[Unit]
+Description=DesiPrice nightly catalogue refresh
+Documentation=https://github.com/manojbarot1/Indian-Grocery-Compare-Poland
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/Documents/desicena/ops/nightly-refresh.sh
+# The HTML shops are crawled at one request per second, so a full run is hours
+# rather than minutes. Well short of that, but not unbounded.
+TimeoutStartSec=5h
+Nice=10
+IOSchedulingClass=idle

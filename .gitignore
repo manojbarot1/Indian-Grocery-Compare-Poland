@@ -8,3 +8,6 @@ dist/
 .DS_Store
 .pytest_cache/
 tsconfig.tsbuildinfo
+
+# nightly refresh output
+ops/logs/

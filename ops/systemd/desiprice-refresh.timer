@@ -1,0 +1,14 @@
+[Unit]
+Description=Run the DesiPrice catalogue refresh nightly
+
+[Timer]
+OnCalendar=*-*-* 03:15:00
+# Spread the load, and avoid hitting every shop at exactly the same minute
+# each night.
+RandomizedDelaySec=30m
+# Catch up after the laptop has been asleep or switched off.
+Persistent=true
+Unit=desiprice-refresh.service
+
+[Install]
+WantedBy=timers.target
