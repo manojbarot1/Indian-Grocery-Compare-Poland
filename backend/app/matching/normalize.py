@@ -132,6 +132,13 @@ SYNONYMS: dict[str, str] = {
     "ceramiczna": "ceramic", "ceramiczny": "ceramic", "zestaw": "set",
     "pokrowiec": "cover", "puszka": "tin", "sito": "sieve", "lyzka": "spoon",
     "noz": "knife", "deska": "board", "czapka": "cap", "koszulka": "shirt",
+    # Cookware and small appliances. Without these a rice cooker was filed
+    # under the Rice food aisle, because "rice" was the only token that matched.
+    "szybkowar": "cooker", "cooker": "cooker", "czajnik": "kettle",
+    "mikser": "mixer", "blender": "blender", "termos": "thermos",
+    "tawa": "tawa", "kadai": "kadai", "grinder": "grinder",
+    "sitko": "strainer", "tarka": "grater", "pojemnik": "container",
+    "indukcyjna": "induction", "indukcje": "induction",
     "mrozone": "frozen", "frozen": "frozen", "swieze": "fresh",
     # descriptors worth keeping distinct
     "caly": "whole", "whole": "whole", "mielony": "ground", "ground": "ground",

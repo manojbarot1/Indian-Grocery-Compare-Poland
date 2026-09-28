@@ -11,6 +11,8 @@ import {
   getShops,
   getStats,
   search,
+  timeAgo,
+  exactTime,
   type SearchResponse,
   type Shop,
   type Stats,
@@ -134,6 +136,14 @@ export default function App() {
 
   return (
     <>
+      {/* The scene the glass refracts. Fixed and behind everything, so panels
+          sample the same colours while the page scrolls under them. */}
+      <div className="bg-canvas" aria-hidden="true">
+        <div className="ambient-orb orb-1" />
+        <div className="ambient-orb orb-2" />
+        <div className="ambient-orb orb-3" />
+      </div>
+
       <header>
         <div className="wrap bar">
           <div className="logo">
@@ -177,6 +187,19 @@ export default function App() {
               {stats.offers.toLocaleString("en")} offers · {stats.shops} shops ·{" "}
               {stats.products_in_multiple_shops.toLocaleString("en")} products to
               compare
+            </span>
+          )}
+          {stats && (
+            <span
+              className="freshness"
+              title={
+                stats.last_refreshed
+                  ? `Newest shop data: ${exactTime(stats.last_refreshed)}\nOldest: ${exactTime(stats.oldest_refreshed)}`
+                  : "No successful refresh recorded yet"
+              }
+            >
+              <span className="freshness-dot" />
+              Prices updated {timeAgo(stats.last_refreshed)}
             </span>
           )}
         </div>

@@ -944,3 +944,356 @@ a {
   table { font-size: 12.5px; }
   th, td { padding: 8px 6px; }
 }
+
+
+/* ==========================================================================
+   Liquid Glass — ported from ~/liquid-glass-site
+   --------------------------------------------------------------------------
+   Dark base, drifting colour orbs behind everything, and surfaces that are
+   genuinely translucent: backdrop blur with saturation and contrast lifts, a
+   diagonal sheen, and a four-layer shadow that puts a bright specular line on
+   the top edge and a dark one underneath, so each panel reads as a slab with
+   thickness rather than a flat tinted box.
+
+   Performance is the whole design constraint here. Blur is GPU work per
+   painted pixel, and this page can show 60 product cards at once, so the full
+   treatment goes on the chrome and the cards get a cheaper version — cheaper
+   still on phones. See the tiers at the bottom.
+   ========================================================================== */
+
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  --glass-blur: 16px;
+  --glass-tint: rgba(255, 255, 255, 0.12);
+  --glass-tint-border: rgba(255, 255, 255, 0.38);
+  --glass-radius: 24px;
+  --glass-radius-sm: 14px;
+
+  --glass-shadow:
+    0 16px 40px -10px rgba(0, 0, 0, 0.5),
+    0 0 1px 1px rgba(255, 255, 255, 0.1) inset,
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.3) inset;
+
+  --ease-glass: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* Dark first, like the reference. */
+  --bg: #07090e;
+  --panel: rgba(255, 255, 255, 0.06);
+  --ink: #f8fafc;
+  --muted: #94a3b8;
+  --line: rgba(255, 255, 255, 0.12);
+  /* iOS orange keeps DesiPrice's identity while sitting inside the reference
+     palette — it is already one of the orb colours. */
+  --accent: #ff9f0a;
+  --accent-soft: rgba(255, 159, 10, 0.16);
+  --good: #30d158;
+  --warn: #ffd60a;
+  --warn-soft: rgba(255, 214, 10, 0.14);
+  --shadow: var(--glass-shadow);
+
+  color-scheme: dark;
+}
+
+/* The reference is dark-only; keep it so in both OS modes rather than
+   inventing a light variant that would not match. */
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #07090e;
+    --panel: rgba(255, 255, 255, 0.06);
+    --ink: #f8fafc;
+    --muted: #94a3b8;
+    --line: rgba(255, 255, 255, 0.12);
+    --accent-soft: rgba(255, 159, 10, 0.16);
+    --warn-soft: rgba(255, 214, 10, 0.14);
+  }
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* --- the scene behind the glass ----------------------------------------- */
+.bg-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.65;
+  pointer-events: none;
+  animation: floatOrb 18s ease-in-out infinite alternate;
+  will-change: transform;
+}
+.orb-1 {
+  top: 8%;
+  left: 12%;
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(circle, rgba(255, 159, 10, 0.8), rgba(191, 90, 242, 0.2));
+}
+.orb-2 {
+  top: 42%;
+  right: 8%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(255, 55, 95, 0.7), rgba(255, 159, 10, 0.2));
+  animation-duration: 22s;
+  animation-delay: -5s;
+}
+.orb-3 {
+  bottom: 6%;
+  left: 30%;
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, rgba(48, 209, 88, 0.6), rgba(10, 132, 255, 0.2));
+  animation-duration: 26s;
+  animation-delay: -11s;
+}
+@keyframes floatOrb {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(60px, -40px) scale(1.15); }
+  100% { transform: translate(-40px, 60px) scale(0.9); }
+}
+
+/* --- the material ------------------------------------------------------- */
+.card,
+header,
+.dialog,
+.filters-toggle {
+  position: relative;
+  background: var(--glass-tint);
+  border: 1px solid var(--glass-tint-border);
+  border-radius: var(--glass-radius);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(145%) contrast(106%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(145%) contrast(106%);
+  box-shadow: var(--glass-shadow);
+  transition: transform 0.3s var(--ease-glass), box-shadow 0.3s var(--ease-glass),
+    border-color 0.3s ease;
+}
+
+/* The diagonal sheen — light raking across the slab. */
+.card::before,
+.dialog::before,
+.filters-toggle::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.45) 0%,
+    rgba(255, 255, 255, 0.1) 25%,
+    rgba(255, 255, 255, 0) 50%,
+    rgba(255, 255, 255, 0.15) 100%
+  );
+  opacity: 0.85;
+  pointer-events: none;
+  z-index: 0;
+}
+/* Content sits above the sheen. */
+.card > *,
+.dialog > *,
+.filters-toggle > * { position: relative; z-index: 1; }
+
+header {
+  border-radius: 0;
+  border-inline: 0;
+  border-top: 0;
+  background: rgba(7, 9, 14, 0.62);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 18px 40px -24px rgba(0, 0, 0, 0.8);
+}
+
+.product:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* --- controls ----------------------------------------------------------- */
+input[type="search"],
+select,
+input[type="number"],
+button {
+  font-family: inherit;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: var(--glass-radius-sm);
+  color: var(--ink);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  backdrop-filter: blur(10px) saturate(140%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.25) inset;
+  transition: background 0.25s var(--ease-glass), border-color 0.25s ease,
+    transform 0.18s var(--ease-glass);
+}
+input::placeholder { color: var(--muted); }
+button:hover:not(:disabled),
+input[type="search"]:focus,
+select:focus {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.42);
+}
+button:active:not(:disabled) { transform: translateY(1px); }
+
+/* The call to action is the one opaque thing on the page. */
+button.primary {
+  background: linear-gradient(180deg, #ffb340, var(--accent));
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #1a1206;
+  font-weight: 650;
+  box-shadow: 0 8px 22px -10px rgba(255, 159, 10, 0.9),
+    0 1px 0 rgba(255, 255, 255, 0.5) inset;
+}
+button.primary:hover:not(:disabled) { filter: brightness(1.06); }
+button.link { background: none; border: none; box-shadow: none; backdrop-filter: none; }
+
+/* --- panels inside glass ------------------------------------------------ */
+.shop-table {
+  border-color: rgba(255, 255, 255, 0.14);
+  border-radius: var(--glass-radius-sm);
+  background: rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+.shop-head {
+  background: rgba(255, 255, 255, 0.06);
+  border-bottom-color: rgba(255, 255, 255, 0.12);
+  color: var(--muted);
+}
+.shop-row { border-bottom-color: rgba(255, 255, 255, 0.09); color: var(--ink); }
+.shop-row:hover { background: rgba(255, 255, 255, 0.09); }
+.shop-row.best { background: rgba(48, 209, 88, 0.14); }
+.shop-row.best .shop-price { color: var(--good); }
+
+.thumb {
+  border-color: rgba(255, 255, 255, 0.16);
+  border-radius: var(--glass-radius-sm);
+  background: rgba(255, 255, 255, 0.92);
+}
+.thumb.placeholder { background: rgba(255, 255, 255, 0.06); }
+
+.cats button { border-radius: 10px; color: var(--ink); }
+.cats button:hover { background: rgba(255, 255, 255, 0.09); }
+.cats button.active { background: var(--accent-soft); color: var(--accent); }
+.saving-banner { background: rgba(48, 209, 88, 0.15); color: var(--good); }
+.pill.grey { background: rgba(255, 255, 255, 0.07); }
+.hidden-note { border-color: rgba(255, 255, 255, 0.18); }
+.dot.est { background: rgba(255, 255, 255, 0.2); border-color: var(--muted); }
+
+.backdrop {
+  background: rgba(3, 4, 8, 0.55);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.dialog { background: rgba(18, 20, 28, 0.72); }
+
+/* ==========================================================================
+   Cost tiers
+   --------------------------------------------------------------------------
+   backdrop-filter costs GPU time per painted pixel, so it is spent where it
+   is seen and withdrawn where it would be felt.
+   ========================================================================== */
+
+/* Desktop: cards get a lighter blur than the chrome — 60 of them are on
+   screen at once, the header is one. */
+.product {
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  backdrop-filter: blur(10px) saturate(140%);
+}
+
+@media (max-width: 760px) {
+  /* On a phone this is a scrolling list of blurred layers, which is exactly
+     what drops frames. Cards become an opaque slab; the chrome stays glass
+     because it does not move. */
+  .product {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: rgba(24, 26, 34, 0.9);
+  }
+  .product::before { opacity: 0.4; }
+  .product:hover { transform: none; }
+
+  :root { --glass-blur: 12px; --glass-radius: 18px; }
+
+  /* Three 80px-blurred orbs is a lot of compositing for a small GPU. */
+  .ambient-orb { filter: blur(60px); opacity: 0.5; }
+  .orb-3 { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-orb { animation: none; }
+  .card, header, .dialog, .filters-toggle,
+  input[type="search"], select, button { transition: none; }
+  .product:hover { transform: none; }
+}
+
+/* Translucency is a readability problem for some people, and the OS knows. */
+@media (prefers-reduced-transparency: reduce) {
+  .card, header, .dialog, .filters-toggle,
+  input[type="search"], select, input[type="number"], button {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: #14161d;
+  }
+  .card::before, .dialog::before, .filters-toggle::before { display: none; }
+  .bg-canvas { display: none; }
+}
+
+/* Without backdrop-filter the tint is just a washed-out panel. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .card, header, .dialog, .filters-toggle,
+  input[type="search"], select, input[type="number"], button {
+    background: #14161d;
+  }
+}
+
+/* --- catalogue freshness ------------------------------------------------- */
+.freshness {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.freshness-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--good);
+  box-shadow: 0 0 0 3px rgba(48, 209, 88, 0.18);
+}
+.shop-age {
+  display: block;
+  font-size: 10px;
+  opacity: 0.7;
+  line-height: 1.2;
+}
+
+/* Two controls were still under 40px on a phone: the sort menu, and the
+   checkbox itself — which is drawn by the browser, so the label carries the
+   hit area instead. */
+@media (max-width: 760px) {
+  select { min-height: 44px; }
+  label.check {
+    min-height: 44px;
+    padding: 0 10px;
+    border-radius: var(--glass-radius-sm);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+  }
+  label.check input[type="checkbox"] { width: 20px; height: 20px; }
+  .freshness { font-size: 11px; }
+}

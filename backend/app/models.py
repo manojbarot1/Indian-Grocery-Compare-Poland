@@ -100,7 +100,9 @@ class Offer(Base):
         ForeignKey("products.id"), index=True, nullable=True
     )
 
-    external_id: Mapped[str] = mapped_column(String(128))
+    # Long enough for a descriptive URL slug; the html adapter also bounds
+    # what it puts here.
+    external_id: Mapped[str] = mapped_column(String(255))
     title: Mapped[str] = mapped_column(String(512))
     url: Mapped[str] = mapped_column(Text)
     image_url: Mapped[str | None] = mapped_column(Text)

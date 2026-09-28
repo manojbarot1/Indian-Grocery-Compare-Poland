@@ -142,7 +142,8 @@ def ingest_shop(session: Session, shop: Shop, dry_run: bool = False) -> IngestRe
         offer.title = raw.title[:512]
         offer.url = raw.url
         offer.image_url = raw.image_url
-        offer.sku = raw.sku
+        # Bounded columns: a shop can put anything in these fields.
+        offer.sku = raw.sku[:128] if raw.sku else None
         offer.price = raw.price
         offer.currency = raw.currency
         offer.price_pln = price_pln

@@ -475,7 +475,23 @@ def stats(session: Session = Depends(get_session)):
             .subquery()
         )
     )
+    # Most recent successful ingest across the active shops. A shop that is
+    # currently unreachable keeps its old timestamp, so this answers "how
+    # fresh is the freshest data" rather than implying everything just ran.
+    last_refreshed = session.scalar(
+        select(func.max(Shop.last_ingest_at)).where(
+            Shop.active.is_(True), Shop.last_ingest_status.like("ok:%")
+        )
+    )
+    oldest_refreshed = session.scalar(
+        select(func.min(Shop.last_ingest_at)).where(
+            Shop.active.is_(True), Shop.last_ingest_at.isnot(None)
+        )
+    )
+
     return {
+        "last_refreshed": last_refreshed.isoformat() if last_refreshed else None,
+        "oldest_refreshed": oldest_refreshed.isoformat() if oldest_refreshed else None,
         "shops": session.scalar(
             select(func.count(Shop.id)).where(Shop.active.is_(True))
         ),

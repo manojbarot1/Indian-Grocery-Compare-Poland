@@ -148,6 +148,10 @@ CATEGORY_RULES: list[tuple[str, str, set[str], int]] = [
             "bowl", "plate", "mug", "pot", "pan", "chopsticks", "ceramic",
             "spoon", "knife", "board", "sieve", "tin", "cover", "set",
             "cap", "shirt", "kalash", "lamp",
+            # Cookware and small appliances — a rice cooker is a cooker, not rice.
+            "cooker", "pressure", "tawa", "kadai", "grinder", "mixer",
+            "blender", "kettle", "thermos", "tiffin", "casserole",
+            "strainer", "grater", "scraper", "flask", "container", "induction",
         },
         NONFOOD,
     ),
@@ -310,10 +314,11 @@ SUBCATEGORY_RULES: dict[str, list[tuple[str, str, set[str]]]] = {
         ("cleaning", "Cleaning", {"detergent"}),
     ],
     "kitchenware": [
-        ("cookware", "Cookware", {"pot", "pan"}),
+        ("appliances", "Appliances", {"cooker", "grinder", "mixer", "blender", "kettle"}),
+        ("cookware", "Cookware", {"pot", "pan", "tawa", "kadai", "pressure", "casserole", "induction"}),
         ("tableware", "Tableware", {"bowl", "plate", "mug", "ceramic"}),
         ("utensils", "Utensils", {"spoon", "knife", "board", "sieve", "chopsticks", "utensil"}),
-        ("storage", "Storage", {"tin", "cover", "set"}),
+        ("storage", "Storage", {"tin", "cover", "set", "container", "flask", "thermos", "tiffin"}),
     ],
     "health": [
         ("ayurveda", "Ayurvedic", {"ayurveda", "herbal"}),

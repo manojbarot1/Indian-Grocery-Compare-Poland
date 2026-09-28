@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Shop } from "../lib/api";
+import { type Shop, timeAgo, exactTime } from "../lib/api";
 
 /**
  * Shop directory.
@@ -60,7 +60,10 @@ export function ShopsPanel({ shops }: { shops: Shop[] }) {
                       <span className="meta">free {Math.round(shop.free_over)}+</span>
                     )}
                   </td>
-                  <td className="num">{shop.offer_count.toLocaleString("en")}</td>
+                  <td className="num" title={exactTime(shop.last_ingest_at)}>
+                    {shop.offer_count.toLocaleString("en")}
+                    <span className="shop-age">{timeAgo(shop.last_ingest_at)}</span>
+                  </td>
                 </tr>
               ))}
             </tbody>

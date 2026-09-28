@@ -74,6 +74,8 @@ export interface Shop {
   offer_count: number;
   shipping_confidence: string;
   free_over: number | null;
+  last_ingest_at: string | null;
+  last_ingest_status: string | null;
 }
 
 export interface ParcelItem {
@@ -135,6 +137,8 @@ export interface Category {
 }
 
 export interface Stats {
+  last_refreshed: string | null;
+  oldest_refreshed: string | null;
   shops: number;
   offers: number;
   products: number;
@@ -198,3 +202,27 @@ export async function optimizeBasket(
 
 export const zl = (value: number | null | undefined): string =>
   value == null ? "—" : `${value.toFixed(2)} zł`;
+
+/**
+ * "2 hours ago" for a timestamp. Shoppers care how stale a price is, not the
+ * exact minute — but the exact time goes in the title attribute, because
+ * "3 days ago" is the kind of thing people want to check.
+ */
+export function timeAgo(iso: string | null): string {
+  if (!iso) return "never";
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "unknown";
+
+  const minutes = Math.floor((Date.now() - then) / 60000);
+  if (minutes < 2) return "just now";
+  if (minutes < 60) return `${minutes} min ago`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} ${hours === 1 ? "hour" : "hours"} ago`;
+
+  const days = Math.floor(hours / 24);
+  return `${days} ${days === 1 ? "day" : "days"} ago`;
+}
+
+export const exactTime = (iso: string | null): string =>
+  iso ? new Date(iso).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) : "";

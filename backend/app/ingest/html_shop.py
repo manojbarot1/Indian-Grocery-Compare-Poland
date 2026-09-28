@@ -17,6 +17,7 @@ a failed page is skipped rather than failing the whole run.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import re
@@ -304,6 +305,20 @@ class HtmlShopAdapter(Adapter):
             "in_stock": in_stock,
         }
 
+    # The column is bounded and some shops use very long descriptive slugs —
+    # Little India's Polish product paths run past 128 characters, which failed
+    # the insert outright. Keep the readable head, then a digest of the whole
+    # path so two products sharing a prefix can never collide.
+    MAX_EXTERNAL_ID = 110
+
+    @classmethod
+    def _external_id(cls, url: str) -> str:
+        path = urlparse(url).path.strip("/") or url
+        if len(path) <= cls.MAX_EXTERNAL_ID:
+            return path
+        digest = hashlib.sha1(path.encode("utf-8")).hexdigest()[:16]
+        return f"{path[: cls.MAX_EXTERNAL_ID - 17]}#{digest}"
+
     @staticmethod
     def _title_with_size(title: str, url: str) -> str:
         """Recover a pack size the page title dropped but the URL slug kept.
@@ -351,7 +366,7 @@ class HtmlShopAdapter(Adapter):
 
                 offers.append(
                     RawOffer(
-                        external_id=urlparse(url).path.strip("/") or url,
+                        external_id=self._external_id(url),
                         title=self._title_with_size(str(data["title"]).strip(), url),
                         url=url,
                         price=float(data["price"]),
