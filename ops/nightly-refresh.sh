@@ -16,7 +16,10 @@ echo "refresh started $(date --iso-8601=seconds)"
 
 cd "$PROJECT_DIR" || { echo "FATAL: $PROJECT_DIR missing"; exit 1; }
 
-docker compose up -d db api || { echo "FATAL: could not start containers"; exit 1; }
+# The whole stack, not just db+api: the refresh itself only needs those two,
+# but this timer is the one thing guaranteed to run daily, so letting it also
+# heal a stopped web container stops the site serving 502 behind the tunnel.
+docker compose up -d || { echo "FATAL: could not start containers"; exit 1; }
 
 # Wait for the API rather than guessing: Postgres takes a moment on a cold boot.
 for _ in $(seq 1 60); do
