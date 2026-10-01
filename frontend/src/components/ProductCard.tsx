@@ -91,11 +91,10 @@ export function ProductCard({ product, onCompare, onAdd }: Props) {
 
       {rows.length > 0 ? (
         <>
+          {/* No Shop/Price column header: it is a header for one to three
+              rows, and at 60 cards a screen that chrome was louder than the
+              prices it labelled. */}
           <div className="shop-table">
-            <div className="shop-head">
-              <span>Shop</span>
-              <span>Price</span>
-            </div>
             {shown.map((row, i) => (
               <ShopRow key={row.shop_slug} row={row} best={i === 0 && !expanded} />
             ))}

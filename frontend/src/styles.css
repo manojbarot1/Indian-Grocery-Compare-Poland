@@ -1341,3 +1341,233 @@ button.link { background: none; border: none; box-shadow: none; backdrop-filter:
 @media (prefers-reduced-transparency: reduce) {
   .card::after, .dialog::after { display: none; }
 }
+
+/* ==========================================================================
+   Grid legibility
+   --------------------------------------------------------------------------
+   Liquid glass is a chrome material. It works on the header, the dialog and
+   the rails — surfaces that float over moving content and are few and large.
+   Tiled sixty times as the content itself it stopped working: every card
+   sampled whichever ambient orb sat behind it and pushed it through
+   saturate(145%), so the grid came out in random muddy olives and maroons
+   with no two cards alike. On top of that the diagonal sheen washed a milky
+   band across each one.
+
+   So the glass stays on the chrome and comes off the product cards. Cards
+   become one calm, repeated surface, which is what lets a grid read as a
+   grid and lets the prices be the loudest thing on it.
+   ========================================================================== */
+
+/* --- the scene stops competing ------------------------------------------ */
+/* The orbs were lighting the cards, not the background. Dimmed and pushed
+   further out of focus they do what they were for: stop the page being flat
+   black, without colouring anything in front of them. */
+.ambient-orb {
+  opacity: 0.22;
+  filter: blur(110px);
+}
+
+/* --- product cards: solid, not glass ------------------------------------ */
+.card.product {
+  background: #151821;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+/* No sheen, no glint: both existed to sell the illusion of a glass slab. */
+.card.product::before,
+.card.product::after { display: none; }
+
+@media (hover: hover) and (pointer: fine) {
+  .card.product:hover {
+    border-color: rgba(255, 255, 255, 0.16);
+    background: #191d27;
+    box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.55);
+    transform: none;
+  }
+}
+
+/* --- the product photo -------------------------------------------------- */
+/* Grocery packshots are shot on white, so a white tile is the honest frame;
+   it just should not be a glowing rectangle. */
+.card.product .thumb {
+  background: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+}
+.card.product .thumb.placeholder {
+  background: rgba(255, 255, 255, 0.04);
+  border-style: dashed;
+}
+
+/* --- prices: the point of the page -------------------------------------- */
+/* Without the column header the rows have to label themselves, so the shop
+   name goes quiet and the number goes loud. */
+.card.product .shop-table {
+  border: none;
+  border-radius: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+.card.product .shop-row {
+  padding: 7px 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+}
+.card.product .shop-row.best {
+  background: none;
+}
+.card.product .shop-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.card.product .shop-name {
+  color: var(--muted);
+  font-size: 12px;
+}
+.card.product .shop-price {
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.card.product .shop-row.best .shop-price {
+  color: var(--good);
+  font-weight: 700;
+}
+/* The free-delivery note was competing with the shop name at nearly the same
+   weight; it is a footnote. */
+.card.product .free-over {
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+/* --- actions ------------------------------------------------------------ */
+/* A filled amber button on every one of sixty cards made "+ list" the most
+   prominent thing on the page, above every price. It becomes an outline and
+   only fills on hover. */
+.card.product .row-actions .primary {
+  background: none;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  box-shadow: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .card.product .row-actions .primary:hover {
+    background: var(--accent);
+    color: #1a1205;
+  }
+}
+
+/* --- the rails ---------------------------------------------------------- */
+/* The count beside each category and shop is reference detail, not a label
+   to read down the list. Tabular, dim, and no longer boxed. */
+.cats .n,
+.stores .n {
+  font-size: 10.5px;
+  opacity: 0.55;
+  background: none;
+  padding: 0;
+}
+.cats button.active .n,
+.stores button.active .n {
+  opacity: 1;
+}
+
+/* Rows only draw a shape when they are hovered or active — a pill per row
+   turned both rails into a stack of buttons competing with the grid. */
+.cats button,
+.stores button {
+  background: none;
+  border: none;
+  border-radius: 8px;
+  font-size: 12.5px;
+}
+.cats button.active,
+.stores button.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .ambient-orb { display: none; }
+}
+
+/* The glass button treatment reaches these through the generic `button` rule.
+   Background alone was not enough to switch it off: the backdrop-filter and
+   the inset specular shadow are what made every rail row read as a raised
+   slab, so sixty rows looked like sixty buttons. */
+.cats button,
+.stores button,
+.card.product .row-actions button,
+.card.product .more {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+/* Left over from the table frame this panel used to have. */
+.card.product .shop-table { background: none; }
+
+/* Compare is the secondary action; it only needs an edge. */
+.card.product .row-actions button {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--ink);
+}
+@media (hover: hover) and (pointer: fine) {
+  .card.product .row-actions button:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.28);
+  }
+}
+.card.product .row-actions .primary {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* The same argument applies to the other panels. A 12% white tint over a near
+   black page is not glass, it is grey haze, and the rails and the shopping
+   list sit still on the page rather than floating over it. Glass is now
+   exactly the chrome: the header, the dialog and the filters button. */
+.card {
+  background: #151821;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+.card::before,
+.card::after { display: none; }
+
+@media (hover: hover) and (pointer: fine) {
+  .card:hover { box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); }
+  .card.product:hover {
+    border-color: rgba(255, 255, 255, 0.16);
+    background: #191d27;
+    box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.55);
+  }
+}
+
+/* Panel headings were full-strength caps competing with the content under
+   them; they are labels. */
+.cats h2,
+.stores h2,
+.shops-title,
+.basket h2 {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+/* The filters button sits directly on the page on a phone, so it picked up the
+   same haze the cards did. It is a control, not a floating layer. */
+.filters-toggle {
+  background: #151821;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+.filters-toggle::before { display: none; }
