@@ -18,7 +18,6 @@ import {
   type Stats,
 } from "./lib/api";
 import { useBasket } from "./lib/useBasket";
-import { useGlassGlint } from "./lib/useGlassGlint";
 
 const SORTS = [
   { value: "savings", label: "Sort: biggest saving" },
@@ -55,7 +54,6 @@ export default function App() {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const { basket, add, setQuantity, remove, clear, items } = useBasket();
-  useGlassGlint();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -142,14 +140,6 @@ export default function App() {
 
   return (
     <>
-      {/* The scene the glass refracts. Fixed and behind everything, so panels
-          sample the same colours while the page scrolls under them. */}
-      <div className="bg-canvas" aria-hidden="true">
-        <div className="ambient-orb orb-1" />
-        <div className="ambient-orb orb-2" />
-        <div className="ambient-orb orb-3" />
-      </div>
-
       <header>
         <div className="wrap bar">
           <div className="logo">

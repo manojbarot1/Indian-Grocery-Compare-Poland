@@ -1,5 +1,8 @@
 :root {
-  --bg: #fbf9f6;
+  /* The page is a shade of paper and the cards are white, far enough apart
+     that a card reads as a card without needing a heavy border or shadow. At
+     #fbf9f6 the two were near enough identical and the grid went flat. */
+  --bg: #f2eee8;
   --panel: #fff;
   --ink: #1c1917;
   --muted: #78716c;
@@ -10,22 +13,27 @@
   --warn: #b45309;
   --warn-soft: #fef6e7;
   --shadow: 0 1px 2px rgba(28, 25, 23, 0.06), 0 4px 12px rgba(28, 25, 23, 0.05);
+
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #17161a;
-    --panel: #211f24;
-    --ink: #f5f3f0;
-    --muted: #a8a29e;
-    --line: #35323a;
-    --accent: #fb923c;
-    --accent-soft: #3a2415;
-    --good: #4ade80;
-    --warn: #fbbf24;
-    --warn-soft: #3a2f15;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 14px rgba(0, 0, 0, 0.25);
-  }
+/* Light always. Dark is kept here but no longer triggered by the operating
+   system: grocery packshots are shot on white, and on a dark page every one
+   of them is a white rectangle in a hole. Flip it on with
+   <html data-theme="dark"> if a toggle is ever added. */
+:root[data-theme="dark"] {
+  --bg: #17161a;
+  --panel: #211f24;
+  --ink: #f5f3f0;
+  --muted: #a8a29e;
+  --line: #35323a;
+  --accent: #fb923c;
+  --accent-soft: #3a2415;
+  --good: #4ade80;
+  --warn: #fbbf24;
+  --warn-soft: #3a2f15;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 14px rgba(0, 0, 0, 0.25);
+  color-scheme: dark;
 }
 
 * {
@@ -429,11 +437,9 @@ section { grid-area: results; }
   border: 1px solid var(--line);
   margin-bottom: 9px;
 }
-@media (prefers-color-scheme: dark) {
-  /* Product shots are shot on white; keep the plate white in dark mode too. */
-  .thumb {
-    background: #f6f4f1;
-  }
+/* Product shots are shot on white; keep the plate white in dark mode too. */
+:root[data-theme="dark"] .thumb {
+  background: #f6f4f1;
 }
 .thumb.placeholder {
   display: grid;
@@ -947,316 +953,225 @@ a {
 
 
 /* ==========================================================================
-   Liquid Glass — ported from ~/liquid-glass-site
+   Product grid
    --------------------------------------------------------------------------
-   Dark base, drifting colour orbs behind everything, and surfaces that are
-   genuinely translucent: backdrop blur with saturation and contrast lifts, a
-   diagonal sheen, and a four-layer shadow that puts a bright specular line on
-   the top edge and a dark one underneath, so each panel reads as a slab with
-   thickness rather than a flat tinted box.
+   The dark "liquid glass" treatment that used to live below this point is
+   gone. It was built for a showcase page with a handful of large panels; this
+   page shows sixty cards at once, and nearly every grocery packshot is shot
+   on a white background, so on dark cards the photos read as white rectangles
+   floating in holes. Back on the paper palette the page already had, a
+   packshot meets the card with nothing between them.
 
-   Performance is the whole design constraint here. Blur is GPU work per
-   painted pixel, and this page can show 60 product cards at once, so the full
-   treatment goes on the chrome and the cards get a cheaper version — cheaper
-   still on phones. See the tiers at the bottom.
+   What survives from that work is everything that was about the grid rather
+   than the material: the saving flag, the sold-out state, two-line titles and
+   price blocks that line up across a row.
    ========================================================================== */
 
-:root {
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
-    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-
-  --glass-blur: 16px;
-  --glass-tint: rgba(255, 255, 255, 0.12);
-  --glass-tint-border: rgba(255, 255, 255, 0.38);
-  --glass-radius: 24px;
-  --glass-radius-sm: 14px;
-
-  --glass-shadow:
-    0 16px 40px -10px rgba(0, 0, 0, 0.5),
-    0 0 1px 1px rgba(255, 255, 255, 0.1) inset,
-    0 1px 0 rgba(255, 255, 255, 0.6) inset,
-    0 -1px 0 rgba(0, 0, 0, 0.3) inset;
-
-  --ease-glass: cubic-bezier(0.2, 0.8, 0.2, 1);
-
-  /* Dark first, like the reference. */
-  --bg: #07090e;
-  --panel: rgba(255, 255, 255, 0.06);
-  --ink: #f8fafc;
-  --muted: #94a3b8;
-  --line: rgba(255, 255, 255, 0.12);
-  /* iOS orange keeps DesiPrice's identity while sitting inside the reference
-     palette — it is already one of the orb colours. */
-  --accent: #ff9f0a;
-  --accent-soft: rgba(255, 159, 10, 0.16);
-  --good: #30d158;
-  --warn: #ffd60a;
-  --warn-soft: rgba(255, 214, 10, 0.14);
-  --shadow: var(--glass-shadow);
-
-  color-scheme: dark;
+.grid {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  align-items: stretch;
+  gap: 14px;
 }
 
-/* The reference is dark-only; keep it so in both OS modes rather than
-   inventing a light variant that would not match. */
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg: #07090e;
-    --panel: rgba(255, 255, 255, 0.06);
-    --ink: #f8fafc;
-    --muted: #94a3b8;
-    --line: rgba(255, 255, 255, 0.12);
-    --accent-soft: rgba(255, 159, 10, 0.16);
-    --warn-soft: rgba(255, 214, 10, 0.14);
-  }
-}
-
-body {
-  font-family: var(--font-sans);
-  background-color: var(--bg);
-  color: var(--ink);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
-}
-
-/* --- the scene behind the glass ----------------------------------------- */
-.bg-canvas {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  overflow: hidden;
-}
-.ambient-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.65;
-  pointer-events: none;
-  animation: floatOrb 18s ease-in-out infinite alternate;
-  will-change: transform;
-}
-.orb-1 {
-  top: 8%;
-  left: 12%;
-  width: 450px;
-  height: 450px;
-  background: radial-gradient(circle, rgba(255, 159, 10, 0.8), rgba(191, 90, 242, 0.2));
-}
-.orb-2 {
-  top: 42%;
-  right: 8%;
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, rgba(255, 55, 95, 0.7), rgba(255, 159, 10, 0.2));
-  animation-duration: 22s;
-  animation-delay: -5s;
-}
-.orb-3 {
-  bottom: 6%;
-  left: 30%;
-  width: 420px;
-  height: 420px;
-  background: radial-gradient(circle, rgba(48, 209, 88, 0.6), rgba(10, 132, 255, 0.2));
-  animation-duration: 26s;
-  animation-delay: -11s;
-}
-@keyframes floatOrb {
-  0%   { transform: translate(0, 0) scale(1); }
-  50%  { transform: translate(60px, -40px) scale(1.15); }
-  100% { transform: translate(-40px, 60px) scale(0.9); }
-}
-
-/* --- the material ------------------------------------------------------- */
-.card,
-header,
-.dialog,
-.filters-toggle {
+/* Full-bleed photo, so the card is a photo with a label under it rather than
+   a box with a picture inside a box. */
+.card.product {
   position: relative;
-  background: var(--glass-tint);
-  border: 1px solid var(--glass-tint-border);
-  border-radius: var(--glass-radius);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(145%) contrast(106%);
-  backdrop-filter: blur(var(--glass-blur)) saturate(145%) contrast(106%);
-  box-shadow: var(--glass-shadow);
-  transition: transform 0.3s var(--ease-glass), box-shadow 0.3s var(--ease-glass),
-    border-color 0.3s ease;
-}
-
-/* The diagonal sheen — light raking across the slab. */
-.card::before,
-.dialog::before,
-.filters-toggle::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.45) 0%,
-    rgba(255, 255, 255, 0.1) 25%,
-    rgba(255, 255, 255, 0) 50%,
-    rgba(255, 255, 255, 0.15) 100%
-  );
-  opacity: 0.85;
-  pointer-events: none;
-  z-index: 0;
-}
-/* Content sits above the sheen. */
-.card > *,
-.dialog > *,
-.filters-toggle > * { position: relative; z-index: 1; }
-
-header {
-  border-radius: 0;
-  border-inline: 0;
-  border-top: 0;
-  background: rgba(7, 9, 14, 0.62);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset,
-    0 18px 40px -24px rgba(0, 0, 0, 0.8);
-}
-
-.product:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
-/* --- controls ----------------------------------------------------------- */
-input[type="search"],
-select,
-input[type="number"],
-button {
-  font-family: inherit;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: var(--glass-radius-sm);
-  color: var(--ink);
-  -webkit-backdrop-filter: blur(10px) saturate(140%);
-  backdrop-filter: blur(10px) saturate(140%);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset,
-    0 -1px 0 rgba(0, 0, 0, 0.25) inset;
-  transition: background 0.25s var(--ease-glass), border-color 0.25s ease,
-    transform 0.18s var(--ease-glass);
-}
-input::placeholder { color: var(--muted); }
-button:hover:not(:disabled),
-input[type="search"]:focus,
-select:focus {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.42);
-}
-button:active:not(:disabled) { transform: translateY(1px); }
-
-/* The call to action is the one opaque thing on the page. */
-button.primary {
-  background: linear-gradient(180deg, #ffb340, var(--accent));
-  border-color: rgba(255, 255, 255, 0.35);
-  color: #1a1206;
-  font-weight: 650;
-  box-shadow: 0 8px 22px -10px rgba(255, 159, 10, 0.9),
-    0 1px 0 rgba(255, 255, 255, 0.5) inset;
-}
-button.primary:hover:not(:disabled) { filter: brightness(1.06); }
-button.link { background: none; border: none; box-shadow: none; backdrop-filter: none; }
-
-/* --- panels inside glass ------------------------------------------------ */
-.shop-table {
-  border-color: rgba(255, 255, 255, 0.14);
-  border-radius: var(--glass-radius-sm);
-  background: rgba(255, 255, 255, 0.04);
+  padding: 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
-.shop-head {
-  background: rgba(255, 255, 255, 0.06);
-  border-bottom-color: rgba(255, 255, 255, 0.12);
+.card.product > *:not(.thumb):not(.product-head) { margin-inline: 13px; }
+.card.product .product-head { margin: 0; position: relative; }
+.card.product .product-id { padding-top: 11px; }
+.card.product .row-actions { margin-bottom: 13px; }
+
+.card.product .thumb {
+  height: 160px;
+  margin-bottom: 0;
+  border: none;
+  border-radius: 0;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+}
+.card.product .thumb.placeholder {
+  background: var(--bg);
+  opacity: 0.6;
+}
+
+/* Prices anchor to the bottom so every card in a row lines its prices and
+   buttons up, however long the name ran. */
+.card.product .shop-table {
+  margin-top: auto;
+  border: none;
+  border-radius: 0;
+  border-top: 1px solid var(--line);
+}
+.card.product .shop-row {
+  padding: 7px 2px;
+  border-bottom: 1px solid var(--line);
+  border-radius: 6px;
+}
+.card.product .shop-row:last-child { border-bottom: none; }
+.card.product .shop-row.best { background: none; }
+.card.product .shop-row:hover { background: var(--bg); }
+.card.product .shop-name { color: var(--muted); font-size: 12px; }
+.card.product .free-over { font-size: 10px; opacity: 0.75; }
+.card.product .shop-price {
+  font-size: 15px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.card.product .shop-row.best .shop-price { color: var(--good); font-weight: 700; }
+/* A lone price is just the price. Green is the comparison saying which shop
+   won, so it needs something to have won against. */
+.card.product .shop-table .shop-row.best:only-child .shop-price {
+  color: var(--ink);
+}
+
+/* Titles ran to one, two or three lines, so every row of the grid was ragged
+   along the bottom. Two lines, always. */
+.product h3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.6em;
+  font-size: 13.5px;
+}
+
+/* The name opens the detail dialog -- the gesture people already try, and it
+   frees the single-shop card from needing a button for it. */
+.title-link {
+  all: unset;
+  cursor: pointer;
+  display: block;
+  color: inherit;
+  font: inherit;
+}
+.title-link:hover { text-decoration: underline; text-underline-offset: 2px; }
+.title-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* --- the saving ---------------------------------------------------------
+   The listing is ordered by what a shopper saves by switching shops, so the
+   card says that first: a flag over an empty corner of the photo, because
+   vertical space on a card is the scarcest thing there is.                 */
+.saving-flag,
+.stock-flag {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.saving-flag {
+  background: var(--good);
+  color: #fff;
+  box-shadow: 0 1px 6px rgba(28, 25, 23, 0.25);
+}
+.saving-flag .pct {
+  font-size: 10.5px;
+  font-weight: 600;
+  opacity: 0.85;
+  padding-left: 5px;
+  border-left: 1px solid rgba(255, 255, 255, 0.45);
+}
+.stock-flag {
+  background: var(--panel);
+  color: var(--muted);
+  font-weight: 600;
+  border: 1px solid var(--line);
+  box-shadow: 0 1px 6px rgba(28, 25, 23, 0.12);
+}
+
+/* A product nobody stocks is still worth finding, but it should not look like
+   something you can put in a basket. */
+.card.product.sold-out { opacity: 0.68; }
+.card.product.sold-out .thumb { filter: grayscale(1); }
+.card.product.sold-out:hover { opacity: 1; }
+
+/* --- actions ------------------------------------------------------------
+   A filled accent button on each of sixty cards made "+ list" the loudest
+   thing on the page, above every price.                                    */
+.card.product .row-actions .primary {
+  background: none;
+  color: var(--accent);
+}
+.card.product .row-actions .primary:hover:not(:disabled) {
+  background: var(--accent);
+  color: #fff;
+}
+.card.product .row-actions .primary:disabled {
+  border-color: var(--line);
+  color: var(--muted);
+  background: none;
+}
+/* One shop means no Compare, so the remaining button takes the row. */
+.row-actions.solo { display: grid; grid-template-columns: 1fr; }
+.card.product .row-actions .count {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- storewise rail ------------------------------------------------------ */
+.stores h2 {
+  margin: 0 0 8px 4px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: var(--muted);
 }
-.shop-row { border-bottom-color: rgba(255, 255, 255, 0.09); color: var(--ink); }
-.shop-row:hover { background: rgba(255, 255, 255, 0.09); }
-.shop-row.best { background: rgba(48, 209, 88, 0.14); }
-.shop-row.best .shop-price { color: var(--good); }
-
-.thumb {
-  border-color: rgba(255, 255, 255, 0.16);
-  border-radius: var(--glass-radius-sm);
-  background: rgba(255, 255, 255, 0.92);
+.stores button {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: none;
+  background: none;
+  border-radius: 7px;
+  font-size: 13px;
+  text-align: left;
+  color: var(--ink);
+  line-height: 1.25;
 }
-.thumb.placeholder { background: rgba(255, 255, 255, 0.06); }
-
-.cats button { border-radius: 10px; color: var(--ink); }
-.cats button:hover { background: rgba(255, 255, 255, 0.09); }
-.cats button.active { background: var(--accent-soft); color: var(--accent); }
-.saving-banner { background: rgba(48, 209, 88, 0.15); color: var(--good); }
-.pill.grey { background: rgba(255, 255, 255, 0.07); }
-.hidden-note { border-color: rgba(255, 255, 255, 0.18); }
-.dot.est { background: rgba(255, 255, 255, 0.2); border-color: var(--muted); }
-
-.backdrop {
-  background: rgba(3, 4, 8, 0.55);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
+.stores button:hover { background: var(--bg); }
+.stores button.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
 }
-.dialog { background: rgba(18, 20, 28, 0.72); }
-
-/* ==========================================================================
-   Cost tiers
-   --------------------------------------------------------------------------
-   backdrop-filter costs GPU time per painted pixel, so it is spent where it
-   is seen and withdrawn where it would be felt.
-   ========================================================================== */
-
-/* Desktop: cards get a lighter blur than the chrome — 60 of them are on
-   screen at once, the header is one. */
-.product {
-  -webkit-backdrop-filter: blur(10px) saturate(140%);
-  backdrop-filter: blur(10px) saturate(140%);
+.stores .n {
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  flex: none;
 }
-
-@media (max-width: 760px) {
-  /* On a phone this is a scrolling list of blurred layers, which is exactly
-     what drops frames. Cards become an opaque slab; the chrome stays glass
-     because it does not move. */
-  .product {
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    background: rgba(24, 26, 34, 0.9);
-  }
-  .product::before { opacity: 0.4; }
-  .product:hover { transform: none; }
-
-  :root { --glass-blur: 12px; --glass-radius: 18px; }
-
-  /* Three 80px-blurred orbs is a lot of compositing for a small GPU. */
-  .ambient-orb { filter: blur(60px); opacity: 0.5; }
-  .orb-3 { display: none; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ambient-orb { animation: none; }
-  .card, header, .dialog, .filters-toggle,
-  input[type="search"], select, button { transition: none; }
-  .product:hover { transform: none; }
-}
-
-/* Translucency is a readability problem for some people, and the OS knows. */
-@media (prefers-reduced-transparency: reduce) {
-  .card, header, .dialog, .filters-toggle,
-  input[type="search"], select, input[type="number"], button {
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    background: #14161d;
-  }
-  .card::before, .dialog::before, .filters-toggle::before { display: none; }
-  .bg-canvas { display: none; }
-}
-
-/* Without backdrop-filter the tint is just a washed-out panel. */
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .card, header, .dialog, .filters-toggle,
-  input[type="search"], select, input[type="number"], button {
-    background: #14161d;
-  }
+.stores button.active .n { color: var(--accent); }
+.basket h2 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
 }
 
 /* --- catalogue freshness ------------------------------------------------- */
@@ -1273,473 +1188,38 @@ button.link { background: none; border: none; box-shadow: none; backdrop-filter:
   height: 6px;
   border-radius: 50%;
   background: var(--good);
-  box-shadow: 0 0 0 3px rgba(48, 209, 88, 0.18);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--good) 20%, transparent);
 }
 .shop-age {
   display: block;
   font-size: 10px;
-  opacity: 0.7;
+  opacity: 0.75;
   line-height: 1.2;
 }
 
-/* Two controls were still under 40px on a phone: the sort menu, and the
-   checkbox itself — which is drawn by the browser, so the label carries the
-   hit area instead. */
-@media (max-width: 760px) {
-  select { min-height: 44px; }
-  label.check {
-    min-height: 44px;
-    padding: 0 10px;
-    border-radius: var(--glass-radius-sm);
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-  }
-  label.check input[type="checkbox"] { width: 20px; height: 20px; }
-  .freshness { font-size: 11px; }
+/* --- interaction polish -------------------------------------------------- */
+button:hover:not(:disabled) { border-color: var(--muted); }
+button:active:not(:disabled) { transform: translateY(1px); }
+button.primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 88%, #000);
 }
-
-/* --- the glint ----------------------------------------------------------
-   The reference puts a mouse-tracked specular highlight on almost every
-   panel — light moving across the slab as the pointer crosses it. Done as
-   ::after rather than a DOM node so no component needs an extra span, and
-   driven by --mouse-x / --mouse-y set from a single delegated listener.   */
-.card::after,
-.dialog::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(
-    circle 300px at var(--mouse-x, 50%) var(--mouse-y, 50%),
-    rgba(255, 255, 255, 0.35) 0%,
-    rgba(255, 255, 255, 0.1) 40%,
-    transparent 80%
-  );
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.25s ease;
-  z-index: 0;
-}
-
-/* Hover-only, so a touch screen never paints it. */
-@media (hover: hover) and (pointer: fine) {
-  .card:hover::after,
-  .dialog::after { opacity: 1; }
-
-  .card:hover {
-    border-color: rgba(255, 255, 255, 0.6);
-    box-shadow:
-      0 24px 60px -12px rgba(0, 0, 0, 0.65),
-      0 0 25px rgba(255, 255, 255, 0.2),
-      0 1px 0 rgba(255, 255, 255, 0.85) inset;
-  }
+input::placeholder { color: var(--muted); }
+input[type="search"]:focus,
+select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card::after, .dialog::after { display: none; }
-}
-@media (prefers-reduced-transparency: reduce) {
-  .card::after, .dialog::after { display: none; }
+  button:active:not(:disabled) { transform: none; }
 }
 
-/* ==========================================================================
-   Grid legibility
-   --------------------------------------------------------------------------
-   Liquid glass is a chrome material. It works on the header, the dialog and
-   the rails — surfaces that float over moving content and are few and large.
-   Tiled sixty times as the content itself it stopped working: every card
-   sampled whichever ambient orb sat behind it and pushed it through
-   saturate(145%), so the grid came out in random muddy olives and maroons
-   with no two cards alike. On top of that the diagonal sheen washed a milky
-   band across each one.
-
-   So the glass stays on the chrome and comes off the product cards. Cards
-   become one calm, repeated surface, which is what lets a grid read as a
-   grid and lets the prices be the loudest thing on it.
-   ========================================================================== */
-
-/* --- the scene stops competing ------------------------------------------ */
-/* The orbs were lighting the cards, not the background. Dimmed and pushed
-   further out of focus they do what they were for: stop the page being flat
-   black, without colouring anything in front of them. */
-.ambient-orb {
-  opacity: 0.22;
-  filter: blur(110px);
-}
-
-/* --- product cards: solid, not glass ------------------------------------ */
-.card.product {
-  background: #151821;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 16px;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-/* No sheen, no glint: both existed to sell the illusion of a glass slab. */
-.card.product::before,
-.card.product::after { display: none; }
-
-@media (hover: hover) and (pointer: fine) {
-  .card.product:hover {
-    border-color: rgba(255, 255, 255, 0.16);
-    background: #191d27;
-    box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.55);
-    transform: none;
-  }
-}
-
-/* --- the product photo -------------------------------------------------- */
-/* Grocery packshots are shot on white, so a white tile is the honest frame;
-   it just should not be a glowing rectangle. */
-.card.product .thumb {
-  background: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 10px;
-}
-.card.product .thumb.placeholder {
-  background: rgba(255, 255, 255, 0.04);
-  border-style: dashed;
-}
-
-/* --- prices: the point of the page -------------------------------------- */
-/* Without the column header the rows have to label themselves, so the shop
-   name goes quiet and the number goes loud. */
-.card.product .shop-table {
-  border: none;
-  border-radius: 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
-}
-.card.product .shop-row {
-  padding: 7px 2px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 6px;
-}
-.card.product .shop-row.best {
-  background: none;
-}
-.card.product .shop-row:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-.card.product .shop-name {
-  color: var(--muted);
-  font-size: 12px;
-}
-.card.product .shop-price {
-  font-size: 15px;
-  font-weight: 650;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-.card.product .shop-row.best .shop-price {
-  color: var(--good);
-  font-weight: 700;
-}
-/* The free-delivery note was competing with the shop name at nearly the same
-   weight; it is a footnote. */
-.card.product .free-over {
-  font-size: 10px;
-  opacity: 0.6;
-}
-
-/* --- actions ------------------------------------------------------------ */
-/* A filled amber button on every one of sixty cards made "+ list" the most
-   prominent thing on the page, above every price. It becomes an outline and
-   only fills on hover. */
-.card.product .row-actions .primary {
-  background: none;
-  border: 1px solid var(--accent);
-  color: var(--accent);
-  box-shadow: none;
-}
-@media (hover: hover) and (pointer: fine) {
-  .card.product .row-actions .primary:hover {
-    background: var(--accent);
-    color: #1a1205;
-  }
-}
-
-/* --- the rails ---------------------------------------------------------- */
-/* The count beside each category and shop is reference detail, not a label
-   to read down the list. Tabular, dim, and no longer boxed. */
-.cats .n,
-.stores .n {
-  font-size: 10.5px;
-  opacity: 0.55;
-  background: none;
-  padding: 0;
-}
-.cats button.active .n,
-.stores button.active .n {
-  opacity: 1;
-}
-
-/* Rows only draw a shape when they are hovered or active — a pill per row
-   turned both rails into a stack of buttons competing with the grid. */
-.cats button,
-.stores button {
-  background: none;
-  border: none;
-  border-radius: 8px;
-  font-size: 12.5px;
-}
-.cats button.active,
-.stores button.active {
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  .ambient-orb { display: none; }
-}
-
-/* The glass button treatment reaches these through the generic `button` rule.
-   Background alone was not enough to switch it off: the backdrop-filter and
-   the inset specular shadow are what made every rail row read as a raised
-   slab, so sixty rows looked like sixty buttons. */
-.cats button,
-.stores button,
-.card.product .row-actions button,
-.card.product .more {
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-  box-shadow: none;
-}
-
-/* Left over from the table frame this panel used to have. */
-.card.product .shop-table { background: none; }
-
-/* Compare is the secondary action; it only needs an edge. */
-.card.product .row-actions button {
-  background: none;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: var(--ink);
-}
-@media (hover: hover) and (pointer: fine) {
-  .card.product .row-actions button:hover {
-    background: rgba(255, 255, 255, 0.07);
-    border-color: rgba(255, 255, 255, 0.28);
-  }
-}
-.card.product .row-actions .primary {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-/* The same argument applies to the other panels. A 12% white tint over a near
-   black page is not glass, it is grey haze, and the rails and the shopping
-   list sit still on the page rather than floating over it. Glass is now
-   exactly the chrome: the header, the dialog and the filters button. */
-.card {
-  background: #151821;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 16px;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-.card::before,
-.card::after { display: none; }
-
-@media (hover: hover) and (pointer: fine) {
-  .card:hover { box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); }
-  .card.product:hover {
-    border-color: rgba(255, 255, 255, 0.16);
-    background: #191d27;
-    box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.55);
-  }
-}
-
-/* Panel headings were full-strength caps competing with the content under
-   them; they are labels. */
-.cats h2,
-.stores h2,
-.shops-title,
-.basket h2 {
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  color: var(--muted);
-}
-
-/* The filters button sits directly on the page on a phone, so it picked up the
-   same haze the cards did. It is a control, not a floating layer. */
-.filters-toggle {
-  background: #151821;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-.filters-toggle::before { display: none; }
-
-/* ==========================================================================
-   Leading with the saving
-   --------------------------------------------------------------------------
-   The listing is now ordered by what a shopper saves by switching shops, so
-   the card has to say that first. It used to be a line under the price rows,
-   below the fold of the card, in the same grey as everything else.
-   ========================================================================== */
-
-.card.product { padding: 0; overflow: hidden; }
-.card.product > *:not(.thumb):not(.product-head) { margin-inline: 13px; }
-.card.product .product-head { margin: 0; }
-.card.product .row-actions { margin-bottom: 13px; }
-
-/* The flag sits over the top-left of the photo. Over the image rather than
-   above it because vertical space on a card is the scarcest thing there is,
-   and a packshot's corners are nearly always empty. */
-.saving-flag,
-.stock-flag {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 9px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 650;
-  letter-spacing: 0.01em;
-  font-variant-numeric: tabular-nums;
-}
-.saving-flag {
-  background: #0f7a35;
-  color: #eafff0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
-}
-.saving-flag .pct {
-  font-size: 10.5px;
-  font-weight: 600;
-  opacity: 0.85;
-  padding-left: 5px;
-  border-left: 1px solid rgba(255, 255, 255, 0.35);
-}
-.stock-flag {
-  background: rgba(20, 22, 29, 0.92);
-  color: var(--muted);
-  font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-}
-
-/* A product nobody stocks is still worth finding, but it should not look like
-   something you can put in a basket. */
-.card.product.sold-out { opacity: 0.62; }
-.card.product.sold-out .thumb { filter: grayscale(1); }
-@media (hover: hover) and (pointer: fine) {
-  .card.product.sold-out:hover { opacity: 1; }
-}
-
-/* --- even rows ----------------------------------------------------------
-   Titles ran to one, two or three lines, so every row of the grid was ragged
-   along the bottom and the cards looked like they had been dropped rather
-   than laid out. Two lines, always.                                        */
-.product h3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  min-height: 2.6em;
-  font-size: 13.5px;
-}
-.grid { align-items: start; gap: 14px; }
-.card.product {
-  display: flex;
-  flex-direction: column;
-}
-.card.product .shop-table { margin-top: auto; }
-
-.product-head { position: relative; }
-.card.product .thumb {
-  height: 160px;
-  border-radius: 0;
-  border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-}
-.card.product .product-id { padding-top: 11px; }
-
-/* --- the single-shop card -----------------------------------------------
-   Nine products in ten are sold by exactly one shop. Those cards say so
-   rather than offering a comparison that cannot happen.                    */
-.card.product .row-actions .single {
-  background: none;
-  border: 1px dashed rgba(255, 255, 255, 0.16);
-  color: var(--muted);
-  font-size: 11.5px;
-  font-weight: 500;
-  text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-@media (hover: hover) and (pointer: fine) {
-  .card.product .row-actions .single:hover {
-    border-style: solid;
-    color: var(--ink);
-  }
-}
-
-/* The shop count on Compare was a bare number against the label. */
-.card.product .row-actions .count {
-  margin-left: 6px;
-  padding: 1px 6px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  font-size: 10.5px;
-  font-variant-numeric: tabular-nums;
-}
-
-/* 248px wanted 772px for three columns and a common laptop gives 771, so the
-   grid spent most of the day at two columns of nearly 380px -- cards wide
-   enough that the price sat a long way from the name it belonged to. */
-.grid {
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  align-items: stretch;
-}
-/* With the price block pushed down by margin-top:auto, stretching the cards
-   lines every price and every button up across the row. */
-.card.product .row-actions { margin-top: 0; }
-
-/* The product name opens the detail dialog -- the gesture people already try,
-   and it frees the single-shop card from needing a button for it. */
-.title-link {
-  all: unset;
-  cursor: pointer;
-  display: block;
-  color: inherit;
-  font: inherit;
-}
-@media (hover: hover) and (pointer: fine) {
-  .title-link:hover { text-decoration: underline; text-underline-offset: 2px; }
-}
-.title-link:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-  border-radius: 3px;
-}
-
-/* One shop means no Compare, so the remaining button takes the row. */
-.row-actions.solo { grid-template-columns: 1fr; display: grid; }
-
-/* A hard white dashed box around every missing photo drew more attention than
-   the photos that were there. */
-.card.product .thumb.placeholder {
-  background: rgba(255, 255, 255, 0.02);
-  border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-  opacity: 0.5;
-}
-
-/* A lone price is just the price. Green is the comparison telling you which
-   shop won, so it needs something to have won against. */
-.card.product .shop-table .shop-row.best:only-child .shop-price {
-  color: var(--ink);
-}
-
-.card.product .row-actions .primary:disabled {
-  border-color: rgba(255, 255, 255, 0.12);
-  color: var(--muted);
-  cursor: not-allowed;
+/* Two controls were still under 40px on a phone: the sort menu, and the
+   checkbox, which is drawn by the browser, so the label carries the hit area. */
+@media (max-width: 760px) {
+  select { min-height: 44px; }
+  label.check { min-height: 44px; padding: 0 10px; }
+  label.check input[type="checkbox"] { width: 20px; height: 20px; }
+  .freshness { font-size: 11px; }
+  .card.product .thumb { height: 190px; }
 }
