@@ -59,9 +59,26 @@ export function ProductCard({ product, onCompare, onAdd }: Props) {
   const dearest =
     inStock.length > 1 ? inStock[inStock.length - 1].price_pln : null;
   const saving = cheapest != null && dearest != null ? dearest - cheapest : null;
+  const worthShowing = saving != null && saving > 0.5 && inStock.length > 1;
+  const pct =
+    worthShowing && dearest ? Math.round((saving! / dearest) * 100) : null;
+  const soldOut = rows.length > 0 && inStock.length === 0;
 
   return (
-    <article className="card product">
+    <article
+      className={`card product${worthShowing ? " has-saving" : ""}${
+        soldOut ? " sold-out" : ""
+      }`}
+    >
+      {/* The saving is the whole proposition, so it leads rather than sitting
+          under the price rows where it used to. */}
+      {worthShowing && (
+        <div className="saving-flag">
+          Save {zl(saving!)}
+          {pct != null && pct >= 5 && <span className="pct">{pct}%</span>}
+        </div>
+      )}
+      {soldOut && <div className="stock-flag">Sold out everywhere</div>}
       <div className="product-head">
         {showImage ? (
           <img
@@ -77,7 +94,11 @@ export function ProductCard({ product, onCompare, onAdd }: Props) {
           </div>
         )}
         <div className="product-id">
-          <h3>{product.name}</h3>
+          <h3>
+            <button className="title-link" onClick={() => onCompare(product.slug)}>
+              {product.name}
+            </button>
+          </h3>
           <div className="sub">
             {product.brand && <span className="brand">{product.brand}</span>}
             {product.best_unit_price_pln != null && product.base_unit && (
@@ -115,18 +136,26 @@ export function ProductCard({ product, onCompare, onAdd }: Props) {
         <div className="sub">No offers available</div>
       )}
 
-      {saving != null && saving > 0.5 && inStock.length > 1 && (
-        <div className="saving-banner">
-          Save <b>{zl(saving)}</b> at {inStock[0].shop_name}
-        </div>
-      )}
-
-      <div className="row-actions">
-        <button onClick={() => onCompare(product.slug)}>
-          Compare
-          {rows.length > 1 && <span className="count">{rows.length}</span>}
-        </button>
-        <button className="primary" onClick={() => onAdd(product.id, product.name)}>
+      {/* "Compare" on a product one shop sells opens a dialog with a single
+          row in it -- the promise of the site visibly failing, on nine cards
+          in ten. It appears only when there is something to compare; the lone
+          shop row above already names the one shop that has it, so saying
+          "only at AsianShop" underneath was repeating the card to itself. */}
+      <div className={`row-actions${rows.length > 1 ? "" : " solo"}`}>
+        {rows.length > 1 && (
+          <button onClick={() => onCompare(product.slug)}>
+            Compare
+            <span className="count">{rows.length}</span>
+          </button>
+        )}
+        {/* Nothing to add: the optimiser can only split an order across shops
+            that will actually sell you the thing. */}
+        <button
+          className="primary"
+          onClick={() => onAdd(product.id, product.name)}
+          disabled={soldOut}
+          title={soldOut ? "No shop has this in stock" : undefined}
+        >
           + list
         </button>
       </div>

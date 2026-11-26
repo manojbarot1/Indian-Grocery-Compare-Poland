@@ -4,7 +4,7 @@ import re
 from dataclasses import asdict, is_dataclass
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import case, distinct, func, or_, select
+from sqlalchemy import case, distinct, func, literal, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from ..basket.optimizer import optimize_basket, to_pln
@@ -29,6 +29,7 @@ from ..shipping import engine as shipping_engine
 router = APIRouter(prefix="/api")
 
 SORTS = {
+    "savings": "biggest saving",
     "price": "lowest price",
     "unit": "cheapest per kg/l",
     "name": "name",
@@ -271,7 +272,9 @@ def search(
     shop: str | None = None,
     category: str | None = Query(default=None, description="Category slug"),
     subcategory: str | None = Query(default=None, description="Sub-category slug"),
-    sort: str = Query(default="price", pattern="^(price|unit|name|offers)$"),
+    sort: str = Query(
+        default="savings", pattern="^(savings|price|unit|name|offers)$"
+    ),
     multi_shop_only: bool = Query(
         default=False, description="Only products actually sold by 2+ shops"
     ),
@@ -332,8 +335,6 @@ def search(
             # summary does when a product is sold out everywhere.
             func.coalesce(in_stock_price, func.min(Offer.price_pln)).label("min_price"),
             func.coalesce(in_stock_unit, func.min(Offer.unit_price_pln)).label("min_unit"),
-            func.count(distinct(case((Offer.in_stock.is_(True), Offer.shop_id))))
-            .label("shops_in_stock"),
             func.count(Offer.id).label("offer_count"),
         )
         .where(Offer.product_id.isnot(None))
@@ -341,9 +342,44 @@ def search(
         .subquery()
     )
 
+    # The saving has to be measured over one price per shop -- the same number
+    # the card shows -- not over every in-stock offer. Several shops list the
+    # same product twice (a single pack and a case, say), and the gap between
+    # two listings in one shop is not something a shopper can save by
+    # switching. Ranking on the raw max put an 8 zl saving above a 40 zl one.
+    per_shop = (
+        select(
+            Offer.product_id.label("product_id"),
+            Offer.shop_id.label("shop_id"),
+            func.min(Offer.price_pln).label("shop_price"),
+        )
+        .where(Offer.product_id.isnot(None), Offer.in_stock.is_(True))
+        .group_by(Offer.product_id, Offer.shop_id)
+        .subquery()
+    )
+    stock = (
+        select(
+            per_shop.c.product_id.label("product_id"),
+            func.count().label("shops_in_stock"),
+            func.min(per_shop.c.shop_price).label("cheapest"),
+            func.max(per_shop.c.shop_price).label("dearest"),
+        )
+        .group_by(per_shop.c.product_id)
+        .subquery()
+    )
+
+    # Products stocked nowhere have no row in `stock`, hence the outer join and
+    # the coalesces below.
+    shops_in_stock = func.coalesce(stock.c.shops_in_stock, 0)
+    saving = case(
+        (stock.c.shops_in_stock >= 2, stock.c.dearest - stock.c.cheapest),
+        else_=literal(0.0),
+    )
+
     ranked_stmt = (
         select(Product.id)
         .join(agg, agg.c.product_id == Product.id)
+        .outerjoin(stock, stock.c.product_id == Product.id)
         .where(*conditions)
     )
 
@@ -355,19 +391,31 @@ def search(
         hidden_single_shop = (
             session.scalar(
                 select(func.count()).select_from(
-                    ranked_stmt.where(agg.c.shops_in_stock < 2).subquery()
+                    ranked_stmt.where(shops_in_stock < 2).subquery()
                 )
             )
             or 0
         )
-        ranked_stmt = ranked_stmt.where(agg.c.shops_in_stock >= 2)
+        ranked_stmt = ranked_stmt.where(shops_in_stock >= 2)
 
     order = {
+        "savings": (saving.desc(), agg.c.min_price),
         "price": (agg.c.min_price.is_(None), agg.c.min_price),
         "unit": (agg.c.min_unit.is_(None), agg.c.min_unit),
         "name": (func.lower(Product.name),),
-        "offers": (agg.c.shops_in_stock.desc(), agg.c.offer_count.desc()),
+        "offers": (shops_in_stock.desc(), agg.c.offer_count.desc()),
     }[sort]
+
+    # Nothing buyable goes last, whatever the sort.
+    #
+    # A third of our offers are out of stock, and under "lowest price" they
+    # were winning: a sold-out 0.60 zl incense stick outranks every real
+    # grocery. The first screen was 33 of 60 products nobody can buy, each
+    # with its price struck through, which reads as a broken site rather than
+    # a thorough one. They stay in the results -- a shopper searching for a
+    # specific item still wants to learn that it exists and is sold out --
+    # they just stop being the first thing anyone sees.
+    order = (shops_in_stock == 0, *order)
 
     total = session.scalar(
         select(func.count()).select_from(ranked_stmt.subquery())
@@ -467,9 +515,13 @@ def basket_optimize(payload: BasketRequest, session: Session = Depends(get_sessi
 
 @router.get("/stats")
 def stats(session: Session = Depends(get_session)):
+    # In-stock only. Counting sold-out offers claimed 1,265 products were
+    # comparable when 808 actually were, and the gap is exactly the products a
+    # visitor would click through to and find nothing to buy.
     multi_shop = session.scalar(
         select(func.count()).select_from(
             select(Offer.product_id)
+            .where(Offer.in_stock.is_(True))
             .group_by(Offer.product_id)
             .having(func.count(func.distinct(Offer.shop_id)) > 1)
             .subquery()

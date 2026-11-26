@@ -1571,3 +1571,175 @@ button.link { background: none; border: none; box-shadow: none; backdrop-filter:
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 .filters-toggle::before { display: none; }
+
+/* ==========================================================================
+   Leading with the saving
+   --------------------------------------------------------------------------
+   The listing is now ordered by what a shopper saves by switching shops, so
+   the card has to say that first. It used to be a line under the price rows,
+   below the fold of the card, in the same grey as everything else.
+   ========================================================================== */
+
+.card.product { padding: 0; overflow: hidden; }
+.card.product > *:not(.thumb):not(.product-head) { margin-inline: 13px; }
+.card.product .product-head { margin: 0; }
+.card.product .row-actions { margin-bottom: 13px; }
+
+/* The flag sits over the top-left of the photo. Over the image rather than
+   above it because vertical space on a card is the scarcest thing there is,
+   and a packshot's corners are nearly always empty. */
+.saving-flag,
+.stock-flag {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.saving-flag {
+  background: #0f7a35;
+  color: #eafff0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+.saving-flag .pct {
+  font-size: 10.5px;
+  font-weight: 600;
+  opacity: 0.85;
+  padding-left: 5px;
+  border-left: 1px solid rgba(255, 255, 255, 0.35);
+}
+.stock-flag {
+  background: rgba(20, 22, 29, 0.92);
+  color: var(--muted);
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+/* A product nobody stocks is still worth finding, but it should not look like
+   something you can put in a basket. */
+.card.product.sold-out { opacity: 0.62; }
+.card.product.sold-out .thumb { filter: grayscale(1); }
+@media (hover: hover) and (pointer: fine) {
+  .card.product.sold-out:hover { opacity: 1; }
+}
+
+/* --- even rows ----------------------------------------------------------
+   Titles ran to one, two or three lines, so every row of the grid was ragged
+   along the bottom and the cards looked like they had been dropped rather
+   than laid out. Two lines, always.                                        */
+.product h3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.6em;
+  font-size: 13.5px;
+}
+.grid { align-items: start; gap: 14px; }
+.card.product {
+  display: flex;
+  flex-direction: column;
+}
+.card.product .shop-table { margin-top: auto; }
+
+.product-head { position: relative; }
+.card.product .thumb {
+  height: 160px;
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+.card.product .product-id { padding-top: 11px; }
+
+/* --- the single-shop card -----------------------------------------------
+   Nine products in ten are sold by exactly one shop. Those cards say so
+   rather than offering a comparison that cannot happen.                    */
+.card.product .row-actions .single {
+  background: none;
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 500;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (hover: hover) and (pointer: fine) {
+  .card.product .row-actions .single:hover {
+    border-style: solid;
+    color: var(--ink);
+  }
+}
+
+/* The shop count on Compare was a bare number against the label. */
+.card.product .row-actions .count {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 248px wanted 772px for three columns and a common laptop gives 771, so the
+   grid spent most of the day at two columns of nearly 380px -- cards wide
+   enough that the price sat a long way from the name it belonged to. */
+.grid {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  align-items: stretch;
+}
+/* With the price block pushed down by margin-top:auto, stretching the cards
+   lines every price and every button up across the row. */
+.card.product .row-actions { margin-top: 0; }
+
+/* The product name opens the detail dialog -- the gesture people already try,
+   and it frees the single-shop card from needing a button for it. */
+.title-link {
+  all: unset;
+  cursor: pointer;
+  display: block;
+  color: inherit;
+  font: inherit;
+}
+@media (hover: hover) and (pointer: fine) {
+  .title-link:hover { text-decoration: underline; text-underline-offset: 2px; }
+}
+.title-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* One shop means no Compare, so the remaining button takes the row. */
+.row-actions.solo { grid-template-columns: 1fr; display: grid; }
+
+/* A hard white dashed box around every missing photo drew more attention than
+   the photos that were there. */
+.card.product .thumb.placeholder {
+  background: rgba(255, 255, 255, 0.02);
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  opacity: 0.5;
+}
+
+/* A lone price is just the price. Green is the comparison telling you which
+   shop won, so it needs something to have won against. */
+.card.product .shop-table .shop-row.best:only-child .shop-price {
+  color: var(--ink);
+}
+
+.card.product .row-actions .primary:disabled {
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--muted);
+  cursor: not-allowed;
+}

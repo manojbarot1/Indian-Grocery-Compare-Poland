@@ -21,6 +21,7 @@ import { useBasket } from "./lib/useBasket";
 import { useGlassGlint } from "./lib/useGlassGlint";
 
 const SORTS = [
+  { value: "savings", label: "Sort: biggest saving" },
   { value: "price", label: "Sort: lowest price" },
   { value: "unit", label: "Sort: cheapest per kg/l" },
   { value: "offers", label: "Sort: most shops" },
@@ -30,7 +31,10 @@ const SORTS = [
 export default function App() {
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
-  const [sort, setSort] = useState("price");
+  // Not "lowest price": across the whole catalogue that ranking leads with
+  // sold-out sachets and incense that one shop stocks, so the first screen of
+  // a price comparison site had nothing on it to compare.
+  const [sort, setSort] = useState("savings");
   // Show everything by default. Filtering to multi-shop products hid 37 of 38
   // parathas, which reads as "we don't stock it" rather than "only one shop
   // has it" — the wrong answer to give someone searching for a real product.

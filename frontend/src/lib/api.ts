@@ -164,7 +164,7 @@ export interface SearchParams {
 
 export function search(params: SearchParams): Promise<SearchResponse> {
   const query = new URLSearchParams({
-    sort: params.sort ?? "price",
+    sort: params.sort ?? "savings",
     page: String(params.page ?? 1),
     page_size: String(params.pageSize ?? 60),
     multi_shop_only: String(params.multiShopOnly ?? false),
